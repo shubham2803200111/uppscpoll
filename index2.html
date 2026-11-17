@@ -1,0 +1,2804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UPPSC Live Quiz Poll — 100 Questions (Telegram Poll Mode)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            tg: {
+              bg: '#0e1621',
+              surface: '#17212b',
+              bubble: '#182533',
+              hover: '#202b36',
+              blue: '#2b5278',
+              accent: '#5288c1',
+              light: '#6ab2f2',
+              border: '#232e3c',
+              muted: '#7f91a4'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0e1621;
+      color: #f5f5f5;
+      -webkit-tap-highlight-color: transparent;
+    }
+    /* Custom Telegram-style dark scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0e1621;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2b3948;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3d5066;
+    }
+    /* Telegram Poll Animated Fill Bar */
+    .poll-bar-fill {
+      transition: width 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.96); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop-in {
+      animation: popIn 0.25s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#0e1621] text-slate-100">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- Telegram Channel-Style Sticky Top Header -->
+  <header class="bg-[#17212b] text-white border-b border-[#232e3c] sticky top-0 z-40 shadow-lg">
+    <div class="max-w-4xl mx-auto px-3 sm:px-5 h-16 flex items-center justify-between gap-2">
+      <!-- Channel Identity -->
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#5288c1] to-[#2b5278] flex items-center justify-center font-extrabold text-white text-sm shadow shrink-0 border border-sky-400/30">
+          UP
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-sm sm:text-base tracking-tight text-white truncate">UPPSC Live Quiz Poll</span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> LIVE
+            </span>
+          </div>
+          <p id="header-room-subtitle" class="text-[11px] text-[#7f91a4] truncate">
+            100 UPPSC MCQs • Telegram Poll Mode
+          </p>
+        </div>
+      </div>
+
+      <!-- Navigation & Share Buttons -->
+      <div id="header-nav-actions" class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <button
+          onclick="copyRoomInviteLink()"
+          title="Invite friends to this exact live poll room"
+          class="px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-bold bg-[#2b5278] hover:bg-[#356391] text-sky-200 border border-sky-500/30 transition flex items-center gap-1.5"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+          <span class="hidden sm:inline">Invite Friend</span>
+        </button>
+
+        <button
+          onclick="switchView('poll')"
+          id="nav-btn-poll"
+          class="hidden px-3 py-1.5 rounded-full text-xs font-bold bg-[#5288c1] text-white transition"
+        >
+          Live Poll
+        </button>
+
+        <button
+          onclick="switchView('leaderboard')"
+          id="nav-btn-leaderboard"
+          class="px-3 py-1.5 rounded-full text-xs font-bold bg-[#202b36] hover:bg-[#2a3846] text-slate-200 border border-[#2f3e4e] transition flex items-center gap-1.5"
+        >
+          <span>Rankings</span>
+          <span id="header-participant-count" class="px-1.5 py-0.2 text-[10px] font-extrabold rounded-full bg-amber-400 text-slate-950">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN PORTAL CONTENT -->
+  <main class="flex-1 w-full max-w-4xl mx-auto px-3 sm:px-5 py-5 sm:py-7">
+
+    <!-- ===================================================================== -->
+    <!-- VIEW 1: JOIN TELEGRAM QUIZ POLL ROOM (MOBILE-FIRST ENTRY)             -->
+    <!-- ===================================================================== -->
+    <section id="view-entry" class="space-y-5 animate-pop-in">
+      <!-- Telegram Channel Info Card -->
+      <div class="bg-[#17212b] rounded-2xl border border-[#232e3c] p-5 sm:p-7 shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <span class="px-3 py-1 rounded-full bg-sky-500/15 text-[#6ab2f2] border border-sky-500/30 text-[11px] font-extrabold uppercase tracking-wider">
+            Telegram-Style Real-Time Quiz Poll
+          </span>
+          <span class="text-xs font-semibold text-[#7f91a4]">100 Questions • +1.33 / -0.33</span>
+        </div>
+
+        <h1 class="text-xl sm:text-2xl font-extrabold text-white leading-snug">
+          UPPSC Prelims GS: Indian Geography (50) &amp; Modern History (50)
+        </h1>
+        <p class="text-xs sm:text-sm text-[#9eb1c4] mt-2 leading-relaxed">
+          Attempt together with your friends on mobile at the exact same time! Tap any option to immediately reveal the correct answer, explanation bulb, and <strong>live vote counts</strong> showing how many people picked Option A, B, C, or D.
+        </p>
+
+        <!-- Feature Highlights Strip -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
+          <div class="p-3.5 rounded-xl bg-[#0e1621] border border-[#232e3c]">
+            <div class="text-xs font-extrabold text-[#6ab2f2]">1. Instant Poll Reveal</div>
+            <p class="text-[11px] text-[#7f91a4] mt-1">Click an option to see right/wrong instantly with a detailed UPPSC explanation.</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-[#0e1621] border border-[#232e3c]">
+            <div class="text-xs font-extrabold text-emerald-400">2. Live Option Vote Bars</div>
+            <p class="text-[11px] text-[#7f91a4] mt-1">See real-time counts like <em>"5 people chose A (62%)"</em> update live as friends vote.</p>
+          </div>
+          <div class="p-3.5 rounded-xl bg-[#0e1621] border border-[#232e3c]">
+            <div class="text-xs font-extrabold text-amber-400">3. Live Room &amp; Rank</div>
+            <p class="text-[11px] text-[#7f91a4] mt-1">Share your Room Link on WhatsApp/Telegram so both of you join the same live room.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Join Poll Form Card -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
+        <div class="md:col-span-7 bg-[#17212b] rounded-2xl border border-[#232e3c] p-5 sm:p-6 shadow-xl">
+          <h2 class="text-base sm:text-lg font-extrabold text-white mb-1">Join Live Poll Room</h2>
+          <p class="text-xs text-[#7f91a4] mb-4">Enter your name and share the Room Code with your friend to attempt together.</p>
+
+          <form id="candidate-start-form" class="space-y-4">
+            <div>
+              <label for="cand-name" class="block text-[11px] font-bold uppercase tracking-wider text-[#9eb1c4] mb-1.5">
+                Your Name <span class="text-rose-400">*</span>
+              </label>
+              <input
+                type="text"
+                id="cand-name"
+                required
+                maxlength="35"
+                placeholder="e.g., Rahul Sharma"
+                class="w-full px-4 py-3 rounded-xl border border-[#2b3948] bg-[#0e1621] text-white text-sm font-medium placeholder-[#5c6f82] focus:outline-none focus:border-[#6ab2f2]"
+              />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label for="cand-room" class="block text-[11px] font-bold uppercase tracking-wider text-[#9eb1c4] mb-1.5">
+                  Live Room Code
+                </label>
+                <div class="flex gap-1.5">
+                  <input
+                    type="text"
+                    id="cand-room"
+                    maxlength="20"
+                    value="UPPSC-LIVE"
+                    placeholder="UPPSC-LIVE"
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-[#2b3948] bg-[#0e1621] text-sky-300 font-mono text-sm font-bold uppercase focus:outline-none focus:border-[#6ab2f2]"
+                  />
+                  <button
+                    type="button"
+                    onclick="generateNewRoomCode()"
+                    title="Create private room code for you and your friend"
+                    class="px-3 py-2.5 rounded-xl bg-[#202b36] hover:bg-[#2a3846] border border-[#2f3e4e] text-xs font-bold text-slate-200 shrink-0"
+                  >
+                    New
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label for="cand-city" class="block text-[11px] font-bold uppercase tracking-wider text-[#9eb1c4] mb-1.5">
+                  District / City (Optional)
+                </label>
+                <input
+                  type="text"
+                  id="cand-city"
+                  maxlength="25"
+                  placeholder="e.g., Prayagraj"
+                  class="w-full px-3.5 py-2.5 rounded-xl border border-[#2b3948] bg-[#0e1621] text-white text-sm font-medium placeholder-[#5c6f82] focus:outline-none focus:border-[#6ab2f2]"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              class="w-full py-3.5 px-5 rounded-xl bg-[#5288c1] hover:bg-[#467ab2] text-white font-extrabold text-sm shadow-lg transition flex items-center justify-center gap-2"
+            >
+              <span>Enter Live Quiz Poll (100 Qs)</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </button>
+          </form>
+        </div>
+
+        <!-- Right 5 Cols: Active Room Participants & Toppers -->
+        <div class="md:col-span-5 bg-[#17212b] rounded-2xl border border-[#232e3c] p-5 shadow-xl space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-extrabold text-white">Live Room Standings</h3>
+              <p id="entry-room-label" class="text-[11px] text-[#7f91a4]">Room: UPPSC-LIVE</p>
+            </div>
+            <button onclick="switchView('leaderboard')" class="text-xs font-bold text-[#6ab2f2] hover:underline">
+              Full List →
+            </button>
+          </div>
+          <div id="entry-mini-leaderboard" class="space-y-2">
+            <div class="text-xs text-[#7f91a4] py-6 text-center bg-[#0e1621] rounded-xl border border-dashed border-[#232e3c]">
+              Connecting to live room...
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- VIEW 2: TELEGRAM-STYLE LIVE QUIZ POLL INTERFACE                       -->
+    <!-- ===================================================================== -->
+    <section id="view-poll" class="hidden space-y-4">
+      <!-- Top Control Strip: Room Code, Sync Mode & Progress -->
+      <div class="bg-[#17212b] rounded-2xl border border-[#232e3c] p-3 sm:p-4 flex flex-wrap items-center justify-between gap-2.5 shadow-md">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span id="poll-room-badge" class="px-2.5 py-1 rounded-lg bg-[#0e1621] border border-[#2b3948] font-mono text-xs font-bold text-[#6ab2f2]">
+            ROOM: UPPSC-LIVE
+          </span>
+          <button
+            onclick="toggleHostSyncMode()"
+            id="btn-host-sync"
+            class="px-2.5 py-1 rounded-lg bg-[#202b36] hover:bg-[#2a3846] border border-[#2f3e4e] text-[11px] font-bold text-slate-300 transition flex items-center gap-1.5"
+            title="Sync question navigation with friends in this room"
+          >
+            <span id="sync-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+            <span id="sync-label">Follow Room Host: OFF</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span id="poll-personal-score" class="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-extrabold">
+            Score: 0.00
+          </span>
+          <button
+            onclick="toggleQuestionGridDrawer()"
+            class="px-3 py-1.5 rounded-lg bg-[#2b5278] hover:bg-[#356391] text-white text-xs font-bold flex items-center gap-1.5 transition"
+          >
+            <span>Q. Grid</span>
+            <span id="poll-progress-badge" class="px-1.5 py-0.2 rounded bg-[#0e1621] text-sky-300 text-[10px]">0/100</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Collapsible 100-Question Navigator Drawer -->
+      <div id="poll-grid-drawer" class="hidden bg-[#17212b] rounded-2xl border border-[#232e3c] p-4 shadow-xl space-y-3 animate-pop-in">
+        <div class="flex items-center justify-between border-b border-[#232e3c] pb-2.5">
+          <div class="flex items-center gap-3 text-[11px] font-semibold text-[#9eb1c4]">
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Correct</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Wrong</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#2b3948]"></span> Unanswered</span>
+          </div>
+          <button onclick="toggleQuestionGridDrawer()" class="text-xs font-bold text-[#7f91a4] hover:text-white">Close ✕</button>
+        </div>
+
+        <div class="max-h-60 overflow-y-auto space-y-3 pr-1">
+          <div>
+            <div class="text-[10px] font-extrabold uppercase tracking-wider text-[#6ab2f2] mb-1.5">Section I: Indian Geography (1–50)</div>
+            <div id="poll-grid-sec1" class="grid grid-cols-10 gap-1.5"></div>
+          </div>
+          <div>
+            <div class="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 mb-1.5">Section II: Modern History (51–100)</div>
+            <div id="poll-grid-sec2" class="grid grid-cols-10 gap-1.5"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TELEGRAM POLL MESSAGE BUBBLE -->
+      <article class="bg-[#182533] rounded-2xl border border-[#263647] shadow-2xl overflow-hidden">
+        <!-- Poll Bubble Header -->
+        <div class="px-4 sm:px-6 pt-4 pb-2 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span id="poll-q-badge" class="text-xs font-extrabold uppercase tracking-wider text-[#6ab2f2]">
+              Question 1 / 100
+            </span>
+            <span class="text-[#4a607a]">•</span>
+            <span id="poll-section-tag" class="text-xs font-semibold text-[#9eb1c4]">
+              Indian Geography • Ramsar Sites (UP)
+            </span>
+          </div>
+
+          <span class="text-[11px] font-semibold text-[#7f91a4] bg-[#0e1621]/70 px-2.5 py-0.5 rounded-full">
+            Quiz Poll • Anonymous Votes
+          </span>
+        </div>
+
+        <!-- Question Prompt -->
+        <div class="px-4 sm:px-6 py-2">
+          <h2 id="poll-q-text" class="text-base sm:text-lg font-bold text-white leading-relaxed whitespace-pre-line">
+            Loading question...
+          </h2>
+        </div>
+
+        <!-- Telegram Poll Options Container -->
+        <div id="poll-options-container" class="px-4 sm:px-6 py-3 space-y-2.5">
+          <!-- Options rendered dynamically with live vote bars once user answers -->
+        </div>
+
+        <!-- Telegram Lightbulb Explanation Box (Appears immediately after user clicks an answer) -->
+        <div id="poll-explanation-box" class="hidden mx-4 sm:mx-6 mb-4 p-3.5 sm:p-4 rounded-xl bg-[#0e1621]/90 border border-[#2b5278] animate-pop-in">
+          <div class="flex items-start gap-2.5">
+            <span class="text-lg leading-none mt-0.5">💡</span>
+            <div class="space-y-1">
+              <div id="poll-result-verdict" class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">
+                Correct Answer! (+1.33 Marks)
+              </div>
+              <p id="poll-explanation-text" class="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                Explanation appears here.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Poll Footer: Total Live Votes & Timestamp -->
+        <div class="px-4 sm:px-6 py-3 bg-[#141f2b] border-t border-[#233242] flex items-center justify-between text-xs text-[#7f91a4]">
+          <div class="flex items-center gap-2">
+            <span id="poll-total-votes" class="font-bold text-slate-300">0 people voted on this question</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="poll-user-status" class="text-[11px] font-semibold text-[#6ab2f2]">Tap an option to vote</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Bottom Mobile-Friendly Navigation Controls -->
+      <div class="flex items-center justify-between gap-3 pt-1">
+        <button
+          type="button"
+          id="btn-poll-prev"
+          onclick="navigatePoll(-1)"
+          class="flex-1 sm:flex-none px-5 py-3 rounded-xl bg-[#17212b] hover:bg-[#202b36] border border-[#232e3c] text-white font-bold text-sm transition disabled:opacity-40"
+        >
+          ← Previous
+        </button>
+
+        <button
+          type="button"
+          onclick="switchView('leaderboard')"
+          class="px-4 py-3 rounded-xl bg-[#17212b] hover:bg-[#202b36] border border-[#232e3c] text-amber-400 font-bold text-xs sm:text-sm transition"
+        >
+          Live Scorecard &amp; Rank
+        </button>
+
+        <button
+          type="button"
+          id="btn-poll-next"
+          onclick="navigatePoll(1)"
+          class="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-[#5288c1] hover:bg-[#467ab2] text-white font-extrabold text-sm shadow-lg transition"
+        >
+          Next Question →
+        </button>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- VIEW 3: LIVE MULTI-USER MERIT LIST / RANKINGS                         -->
+    <!-- ===================================================================== -->
+    <section id="view-leaderboard" class="hidden space-y-5 animate-pop-in">
+      <div class="bg-[#17212b] rounded-2xl border border-[#232e3c] p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+        <div>
+          <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[11px] font-extrabold uppercase">
+            Real-Time Room Leaderboard
+          </span>
+          <h1 id="lb-room-title" class="text-xl sm:text-2xl font-extrabold text-white mt-1">
+            Live Participant Rankings
+          </h1>
+          <p class="text-xs text-[#7f91a4] mt-0.5">
+            Updates live as every participant taps answers on their phone (+1.33 correct, -0.33 wrong).
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            onclick="copyRoomInviteLink()"
+            class="px-3.5 py-2.5 rounded-xl bg-[#202b36] hover:bg-[#2a3846] border border-[#2f3e4e] text-sky-300 font-bold text-xs transition"
+          >
+            Share Room Link
+          </button>
+          <button
+            onclick="returnToPollOrEntry()"
+            class="px-4 py-2.5 rounded-xl bg-[#5288c1] hover:bg-[#467ab2] text-white font-bold text-xs sm:text-sm transition"
+          >
+            ← Back to Poll
+          </button>
+        </div>
+      </div>
+
+      <!-- Top 3 Podium Cards -->
+      <div id="lb-top3-cards" class="grid grid-cols-1 sm:grid-cols-3 gap-3.5"></div>
+
+      <!-- Full Participant Rankings Table -->
+      <div class="bg-[#17212b] rounded-2xl border border-[#232e3c] shadow-xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-[#0e1621] text-[#7f91a4] text-[11px] font-bold uppercase tracking-wider border-b border-[#232e3c]">
+                <th class="py-3.5 px-4">Rank</th>
+                <th class="py-3.5 px-4">Participant</th>
+                <th class="py-3.5 px-4 text-center">Answered</th>
+                <th class="py-3.5 px-4 text-center">Correct</th>
+                <th class="py-3.5 px-4 text-center">Wrong</th>
+                <th class="py-3.5 px-4 text-center">Accuracy</th>
+                <th class="py-3.5 px-4 text-right">Net Score</th>
+                <th class="py-3.5 px-4 text-right">Scorecard</th>
+              </tr>
+            </thead>
+            <tbody id="lb-table-body" class="divide-y divide-[#232e3c] text-sm"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- VIEW 4: DETAILED PARTICIPANT SCORECARD                                -->
+    <!-- ===================================================================== -->
+    <section id="view-scorecard" class="hidden space-y-5 animate-pop-in">
+      <div class="flex items-center justify-between gap-3">
+        <button
+          onclick="switchView('leaderboard')"
+          class="px-4 py-2 rounded-xl bg-[#17212b] border border-[#232e3c] hover:bg-[#202b36] text-white font-bold text-xs sm:text-sm transition"
+        >
+          ← Back to Rankings
+        </button>
+        <button
+          onclick="returnToPollOrEntry()"
+          class="px-4 py-2 rounded-xl bg-[#5288c1] hover:bg-[#467ab2] text-white font-bold text-xs sm:text-sm transition"
+        >
+          Continue Poll →
+        </button>
+      </div>
+
+      <!-- Scorecard Summary Card -->
+      <div class="bg-[#17212b] rounded-2xl border border-[#232e3c] overflow-hidden shadow-xl">
+        <div class="bg-gradient-to-r from-[#182533] to-[#2b5278] p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#232e3c]">
+          <div>
+            <span class="text-[11px] font-extrabold uppercase tracking-widest text-sky-300">Participant Live Scorecard</span>
+            <h1 id="sc-candidate-name" class="text-2xl font-extrabold text-white mt-0.5">Participant Name</h1>
+            <p id="sc-candidate-meta" class="text-xs text-sky-200/80 mt-1">Room: UPPSC-LIVE • City: —</p>
+          </div>
+          <div class="flex items-center gap-4 bg-[#0e1621]/60 border border-white/10 rounded-xl px-4 py-3">
+            <div class="text-center pr-4 border-r border-white/15">
+              <div class="text-[10px] uppercase tracking-wider text-sky-200">Live Rank</div>
+              <div id="sc-rank-badge" class="text-2xl font-extrabold text-amber-400">#1</div>
+            </div>
+            <div class="text-center">
+              <div class="text-[10px] uppercase tracking-wider text-sky-200">Net Score</div>
+              <div id="sc-net-score" class="text-2xl font-extrabold text-white">0.00</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-5 grid grid-cols-2 sm:grid-cols-5 gap-3 bg-[#0e1621]/40 border-b border-[#232e3c]">
+          <div class="p-3 rounded-xl bg-[#0e1621] border border-[#232e3c]">
+            <div class="text-[10px] font-bold uppercase text-[#7f91a4]">Answered</div>
+            <div id="sc-attempted" class="text-base font-extrabold text-white mt-0.5">0 / 100</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0e1621] border border-emerald-500/30">
+            <div class="text-[10px] font-bold uppercase text-emerald-400">Correct (+1.33)</div>
+            <div id="sc-correct" class="text-base font-extrabold text-emerald-400 mt-0.5">0</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0e1621] border border-rose-500/30">
+            <div class="text-[10px] font-bold uppercase text-rose-400">Wrong (-0.33)</div>
+            <div id="sc-wrong" class="text-base font-extrabold text-rose-400 mt-0.5">0</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0e1621] border border-[#232e3c]">
+            <div class="text-[10px] font-bold uppercase text-[#7f91a4]">Unanswered</div>
+            <div id="sc-unattempted" class="text-base font-extrabold text-slate-300 mt-0.5">100</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0e1621] border border-sky-500/30 col-span-2 sm:col-span-1">
+            <div class="text-[10px] font-bold uppercase text-[#6ab2f2]">Accuracy</div>
+            <div id="sc-accuracy" class="text-base font-extrabold text-[#6ab2f2] mt-0.5">0%</div>
+          </div>
+        </div>
+
+        <!-- Section Breakdown -->
+        <div class="p-5">
+          <h2 class="text-xs font-extrabold uppercase tracking-wider text-[#9eb1c4] mb-3">Subject-Wise Breakdown</h2>
+          <div class="overflow-x-auto rounded-xl border border-[#232e3c]">
+            <table class="w-full text-left text-xs sm:text-sm">
+              <thead class="bg-[#0e1621] text-[#7f91a4] font-bold border-b border-[#232e3c]">
+                <tr>
+                  <th class="py-2.5 px-4">Subject</th>
+                  <th class="py-2.5 px-4 text-center">Answered</th>
+                  <th class="py-2.5 px-4 text-center">Correct</th>
+                  <th class="py-2.5 px-4 text-center">Wrong</th>
+                  <th class="py-2.5 px-4 text-right">Score</th>
+                </tr>
+              </thead>
+              <tbody id="sc-section-tbody" class="divide-y divide-[#232e3c]"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed Answered Questions Review -->
+      <div class="bg-[#17212b] rounded-2xl border border-[#232e3c] p-5 space-y-4 shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[#232e3c] pb-3">
+          <h2 class="text-base font-extrabold text-white">Response &amp; Live Poll Breakdown</h2>
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="filterScorecardSolutions('ALL')" data-filter="ALL" class="sc-filter-btn px-3 py-1 rounded-lg text-xs font-bold bg-[#5288c1] text-white">All (100)</button>
+            <button onclick="filterScorecardSolutions('CORRECT')" data-filter="CORRECT" class="sc-filter-btn px-3 py-1 rounded-lg text-xs font-bold bg-[#0e1621] text-slate-300">Correct</button>
+            <button onclick="filterScorecardSolutions('WRONG')" data-filter="WRONG" class="sc-filter-btn px-3 py-1 rounded-lg text-xs font-bold bg-[#0e1621] text-slate-300">Wrong</button>
+          </div>
+        </div>
+        <div id="sc-solutions-list" class="space-y-3"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Firebase & Real-Time Telegram Quiz Poll Engine -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      doc,
+      setDoc,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // =========================================================================
+    // 1. ALL 100 UPPSC-PATTERN QUESTIONS (50 GEOGRAPHY + 50 MODERN HISTORY)
+    // =========================================================================
+    const UPPSC_QUESTIONS = [
+      // -------------------- SECTION I: INDIAN GEOGRAPHY (Q1 - Q50) --------------------
+      {
+        id: 1,
+        section: "Indian Geography",
+        topic: "Ramsar Sites (UP)",
+        question: "Which of the following Ramsar sites of Uttar Pradesh is NOT correctly matched with its district?",
+        options: [
+          "Bakhira Wildlife Sanctuary — Sant Kabir Nagar",
+          "Sarsai Nawar Jheel — Etawah",
+          "Parvati Arga Bird Sanctuary — Gonda",
+          "Saman Bird Sanctuary — Raebareli"
+        ],
+        correct: 3,
+        explanation: "Saman Bird Sanctuary is located in Mainpuri district (not Raebareli; Samaspur Bird Sanctuary is in Raebareli). Bakhira (Sant Kabir Nagar), Sarsai Nawar (Etawah), and Parvati Arga (Gonda) are correctly matched."
+      },
+      {
+        id: 2,
+        section: "Indian Geography",
+        topic: "Ramsar Sites & Wetlands",
+        question: "Consider the following statements regarding Ramsar Sites in India:\n1. Haiderpur Wetland is located on the Muzaffarnagar–Bijnor border in Uttar Pradesh.\n2. Keoladeo National Park and Loktak Lake are currently listed under the Montreux Record.\nWhich of the statements given above is/are correct?",
+        options: [
+          "1 only",
+          "2 only",
+          "Both 1 and 2",
+          "Neither 1 nor 2"
+        ],
+        correct: 2,
+        explanation: "Both statements are correct: Haiderpur Wetland lies in Hastinapur WLS across Muzaffarnagar and Bijnor, and Keoladeo National Park (Rajasthan) & Loktak Lake (Manipur) are the two Indian sites on the Montreux Record."
+      },
+      {
+        id: 3,
+        section: "Indian Geography",
+        topic: "Mineral Production",
+        question: "Match List-I (Mineral Belt / Mine) with List-II (Principal Mineral) and select the correct answer:\nA. Bailadila (Chhattisgarh)\nB. Khetri (Rajasthan)\nC. Zawar (Rajasthan)\nD. Jaduguda (Jharkhand)",
+        options: [
+          "A-Iron Ore, B-Copper, C-Zinc & Lead, D-Uranium",
+          "A-Coal, B-Iron Ore, C-Copper, D-Mica",
+          "A-Iron Ore, B-Zinc & Lead, C-Uranium, D-Copper",
+          "A-Bauxite, B-Copper, C-Zinc & Lead, D-Gold"
+        ],
+        correct: 0,
+        explanation: "Bailadila (Dantewada, Chhattisgarh) is famous for high-grade hematite iron ore; Khetri for copper; Zawar for zinc and lead; and Jaduguda (Singhbhum) is India's first uranium mine."
+      },
+      {
+        id: 4,
+        section: "Indian Geography",
+        topic: "Tiger Reserves of UP",
+        question: "Which is the 4th Tiger Reserve of Uttar Pradesh notified in the Bundelkhand region?",
+        options: [
+          "Amangarh Tiger Reserve",
+          "Ranipur Tiger Reserve",
+          "Sohagibarwa Tiger Reserve",
+          "Katerniaghat Tiger Reserve"
+        ],
+        correct: 1,
+        explanation: "Ranipur Tiger Reserve (Chitrakoot district) was notified as the 4th Tiger Reserve of Uttar Pradesh (and 53rd of India), after Dudhwa, Pilibhit, and Amangarh."
+      },
+      {
+        id: 5,
+        section: "Indian Geography",
+        topic: "Dams & River Valley Projects",
+        question: "Govind Ballabh Pant Sagar, India's largest artificial lake by volume, is formed behind which dam?",
+        options: [
+          "Hirakud Dam",
+          "Bhakra Dam",
+          "Rihand Dam",
+          "Matatila Dam"
+        ],
+        correct: 2,
+        explanation: "Rihand Dam, built across the Rihand River (a tributary of the Son) at Pipri in Sonbhadra district of Uttar Pradesh, creates the Govind Ballabh Pant Sagar reservoir."
+      },
+      {
+        id: 6,
+        section: "Indian Geography",
+        topic: "Himalayan River Confluences",
+        question: "At which of the following Panch Prayags does the Alaknanda River meet the Mandakini River?",
+        options: [
+          "Devprayag",
+          "Karnaprayag",
+          "Rudraprayag",
+          "Nandaprayag"
+        ],
+        correct: 2,
+        explanation: "Rudraprayag is the confluence of Alaknanda and Mandakini. Devprayag is Alaknanda + Bhagirathi; Karnaprayag is Alaknanda + Pindar; Nandaprayag is Alaknanda + Nandakini."
+      },
+      {
+        id: 7,
+        section: "Indian Geography",
+        topic: "Ramsar Sites of India",
+        question: "Sur Sarovar (Keetham Lake), a designated Ramsar site in Uttar Pradesh, is situated in which district?",
+        options: [
+          "Agra",
+          "Mathura",
+          "Unnao",
+          "Aligarh"
+        ],
+        correct: 0,
+        explanation: "Sur Sarovar, also known as Keetham Lake, is located in Agra district and was added to the Ramsar list in 2020."
+      },
+      {
+        id: 8,
+        section: "Indian Geography",
+        topic: "Mineral Resources",
+        question: "Malanjkhand in Balaghat district of Madhya Pradesh is the largest open-pit mine in India for which mineral?",
+        options: [
+          "Manganese",
+          "Copper",
+          "Diamond",
+          "Bauxite"
+        ],
+        correct: 1,
+        explanation: "Malanjkhand (Balaghat, MP) is India's single largest copper deposit and open-cast copper mine operated by Hindustan Copper Limited."
+      },
+      {
+        id: 9,
+        section: "Indian Geography",
+        topic: "Wildlife Sanctuaries & Reserves",
+        question: "Which of the following pairs of Tiger Reserve and State is NOT correctly matched?",
+        options: [
+          "Simlipal — Odisha",
+          "Satpura — Madhya Pradesh",
+          "Nagarjunasagar-Srisailam — Tamil Nadu",
+          "Indravati — Chhattisgarh"
+        ],
+        correct: 2,
+        explanation: "Nagarjunasagar-Srisailam Tiger Reserve is located in Andhra Pradesh and Telangana (largest tiger reserve by area in India), not Tamil Nadu."
+      },
+      {
+        id: 10,
+        section: "Indian Geography",
+        topic: "Hydroelectric Projects",
+        question: "Salal, Baglihar, and Dulhasti hydroelectric power projects are constructed on which river?",
+        options: [
+          "Jhelum",
+          "Chenab",
+          "Ravi",
+          "Beas"
+        ],
+        correct: 1,
+        explanation: "Salal, Baglihar, and Dulhasti are major run-of-the-river hydroelectric projects built on the Chenab River in Jammu & Kashmir."
+      },
+      {
+        id: 11,
+        section: "Indian Geography",
+        topic: "Peninsular Rivers",
+        question: "Which of the following rivers flows westward into the Arabian Sea through a rift valley?",
+        options: [
+          "Godavari",
+          "Mahanadi",
+          "Tapti (Tapi)",
+          "Cauvery"
+        ],
+        correct: 2,
+        explanation: "Narmada and Tapti (Tapi) flow westward through rift valleys between the Vindhya, Satpura, and Ajanta ranges into the Gulf of Khambhat (Arabian Sea)."
+      },
+      {
+        id: 12,
+        section: "Indian Geography",
+        topic: "Mountain Passes",
+        question: "Which of the following mountain passes connects Srinagar with Leh?",
+        options: [
+          "Banihal Pass",
+          "Zoji La",
+          "Shipki La",
+          "Nathu La"
+        ],
+        correct: 1,
+        explanation: "Zoji La (in the Zanskar/Greater Himalayan range, Ladakh) connects Srinagar in the Kashmir Valley with Kargil and Leh."
+      },
+      {
+        id: 13,
+        section: "Indian Geography",
+        topic: "Ramsar Sites (UP)",
+        question: "As of 2024–2025, how many Ramsar wetland sites are located in Uttar Pradesh?",
+        options: [
+          "8",
+          "10",
+          "12",
+          "14"
+        ],
+        correct: 1,
+        explanation: "Uttar Pradesh has 10 Ramsar sites: Upper Ganga River, Nawabganj, Parvati Arga, Saman, Samaspur, Sandi, Sarsai Nawar, Sur Sarovar, Haiderpur, and Bakhira."
+      },
+      {
+        id: 14,
+        section: "Indian Geography",
+        topic: "Dams of India",
+        question: "Tehri Dam, the highest dam in India, is constructed at the confluence of which two rivers?",
+        options: [
+          "Bhagirathi and Bhilangana",
+          "Alaknanda and Bhagirathi",
+          "Yamuna and Tons",
+          "Sutlej and Spiti"
+        ],
+        correct: 0,
+        explanation: "Tehri Dam (260.5 m high) in Uttarakhand is built near the confluence of the Bhagirathi and Bhilangana rivers."
+      },
+      {
+        id: 15,
+        section: "Indian Geography",
+        topic: "Mineral Belts of India",
+        question: "Kudremukh in Karnataka is renowned for its rich deposits of:",
+        options: [
+          "Gold",
+          "Iron Ore",
+          "Limestone",
+          "Chromite"
+        ],
+        correct: 1,
+        explanation: "Kudremukh in Chikkamagaluru district of Karnataka is famous for large magnetite iron ore deposits in the Western Ghats."
+      },
+      {
+        id: 16,
+        section: "Indian Geography",
+        topic: "UP Wildlife Sanctuaries",
+        question: "Which is the oldest Wildlife Sanctuary in Uttar Pradesh, established in 1957?",
+        options: [
+          "Chandra Prabha Wildlife Sanctuary",
+          "Katerniaghat Wildlife Sanctuary",
+          "Hastinapur Wildlife Sanctuary",
+          "National Chambal Sanctuary"
+        ],
+        correct: 0,
+        explanation: "Chandra Prabha Wildlife Sanctuary in Chandauli district, established in 1957, is the oldest wildlife sanctuary in Uttar Pradesh."
+      },
+      {
+        id: 17,
+        section: "Indian Geography",
+        topic: "Soils of India",
+        question: "Black cotton soil (Regur soil) of the Deccan Plateau is characterized by high water retention capacity and is rich in:",
+        options: [
+          "Nitrogen and Phosphorus",
+          "Lime, Iron, Magnesia and Alumina",
+          "Humus and Organic Matter",
+          "Potash and Phosphoric Acid only"
+        ],
+        correct: 1,
+        explanation: "Regur (Black) soil derived from Deccan Trap basalt is rich in lime, iron, magnesia, and alumina, though deficient in nitrogen, phosphorus, and organic matter."
+      },
+      {
+        id: 18,
+        section: "Indian Geography",
+        topic: "Rivers of Uttar Pradesh",
+        question: "Which of the following rivers of Uttar Pradesh originates in the plains (Fulhar Lake, Pilibhit) rather than the Himalayas or Peninsular plateau?",
+        options: [
+          "Ghaghara",
+          "Gomti",
+          "Betwa",
+          "Ken"
+        ],
+        correct: 1,
+        explanation: "The Gomti River originates from Gomat Taal (Fulhar Jheel) near Madho Tanda in Pilibhit district of Uttar Pradesh and meets the Ganga near Saidpur (Ghazipur)."
+      },
+      {
+        id: 19,
+        section: "Indian Geography",
+        topic: "Ramsar Sites of India",
+        question: "Renuka Wetland, the smallest Ramsar site in India by area, is situated in which state?",
+        options: [
+          "Uttarakhand",
+          "Himachal Pradesh",
+          "Jammu & Kashmir",
+          "Sikkim"
+        ],
+        correct: 1,
+        explanation: "Renuka Wetland (0.2 sq. km) in Sirmaur district of Himachal Pradesh is the smallest Ramsar site in India, while Sundarbans Wetland (West Bengal) is the largest."
+      },
+      {
+        id: 20,
+        section: "Indian Geography",
+        topic: "Coalfields of India",
+        question: "Singrauli coalfield, a major supplier of coal to thermal power plants, is spread across which two states?",
+        options: [
+          "Jharkhand and West Bengal",
+          "Madhya Pradesh and Uttar Pradesh",
+          "Chhattisgarh and Odisha",
+          "Telangana and Maharashtra"
+        ],
+        correct: 1,
+        explanation: "Singrauli coalfield is located mainly in Singrauli district of Madhya Pradesh and extends into Sonbhadra district of Uttar Pradesh."
+      },
+      {
+        id: 21,
+        section: "Indian Geography",
+        topic: "Dams & Rivers",
+        question: "Almatti Dam and Narayanpur Dam are major irrigation and hydroelectric projects built on which river?",
+        options: [
+          "Godavari",
+          "Krishna",
+          "Tungabhadra",
+          "Penner"
+        ],
+        correct: 1,
+        explanation: "Both Almatti Dam (Lal Bahadur Shastri Dam) and Narayanpur Dam are constructed across the Krishna River in northern Karnataka."
+      },
+      {
+        id: 22,
+        section: "Indian Geography",
+        topic: "Tributaries of Ganga",
+        question: "Arrange the following left-bank tributaries of the Ganga River from West to East:\n1. Gomti\n2. Ghaghara\n3. Gandak\n4. Kosi",
+        options: [
+          "1 - 2 - 3 - 4",
+          "2 - 1 - 3 - 4",
+          "1 - 3 - 2 - 4",
+          "2 - 3 - 1 - 4"
+        ],
+        correct: 0,
+        explanation: "Moving from west to east along the Ganga, the left-bank tributaries join in the exact sequence: Gomti (Ghazipur), Ghaghara (Chhapra), Gandak (Sonpur/Hajipur), and Kosi (Kursela)."
+      },
+      {
+        id: 23,
+        section: "Indian Geography",
+        topic: "Biosphere Reserves",
+        question: "Which of the following Biosphere Reserves of India was the FIRST to be included in UNESCO's World Network of Biosphere Reserves (in 2000)?",
+        options: [
+          "Nanda Devi",
+          "Nilgiri",
+          "Gulf of Mannar",
+          "Sundarbans"
+        ],
+        correct: 1,
+        explanation: "Nilgiri Biosphere Reserve (established in 1986 across TN, Kerala, Karnataka) was the first Indian biosphere reserve added to UNESCO's MAB network in 2000."
+      },
+      {
+        id: 24,
+        section: "Indian Geography",
+        topic: "Mineral Production",
+        question: "Koraput and Kalahandi districts of Odisha are globally renowned for large reserves of which mineral?",
+        options: [
+          "Bauxite",
+          "Copper",
+          "Silver",
+          "Gypsum"
+        ],
+        correct: 0,
+        explanation: "Odisha is India's largest producer of bauxite, with Panchpatmali (Koraput) and Kalahandi hosting massive high-grade bauxite deposits."
+      },
+      {
+        id: 25,
+        section: "Indian Geography",
+        topic: "National Parks & Wildlife",
+        question: "Keibul Lamjao National Park, the world's only floating national park and habitat of the Sangai deer, is located on which lake?",
+        options: [
+          "Wular Lake",
+          "Loktak Lake",
+          "Kolleru Lake",
+          "Vembanad Lake"
+        ],
+        correct: 1,
+        explanation: "Keibul Lamjao National Park floats over phumdis (heterogeneous mass of vegetation) on Loktak Lake in Bishnupur district of Manipur."
+      },
+      {
+        id: 26,
+        section: "Indian Geography",
+        topic: "Dams in Uttar Pradesh",
+        question: "Matatila Dam and Rajghat Dam are joint interstate projects of Uttar Pradesh and Madhya Pradesh built on which river?",
+        options: [
+          "Chambal",
+          "Ken",
+          "Betwa",
+          "Son"
+        ],
+        correct: 2,
+        explanation: "Matatila Dam (Lalitpur) and Rajghat Dam are built across the Betwa River as joint projects of Uttar Pradesh and Madhya Pradesh."
+      },
+      {
+        id: 27,
+        section: "Indian Geography",
+        topic: "Waterfalls of India",
+        question: "Kunchikal Falls, considered the highest tiered waterfall in India, is formed by which river in Karnataka?",
+        options: [
+          "Sharavathi",
+          "Varahi",
+          "Cauvery",
+          "Netravati"
+        ],
+        correct: 1,
+        explanation: "Kunchikal Falls (455 m) in Shivamogga district of Karnataka is formed by the Varahi River, whereas Jog Falls is on the Sharavathi River."
+      },
+      {
+        id: 28,
+        section: "Indian Geography",
+        topic: "Ramsar Sites (UP)",
+        question: "Which was the FIRST Ramsar wetland site designated in Uttar Pradesh (in 2005)?",
+        options: [
+          "Upper Ganga River (Brijghat to Narora Stretch)",
+          "Nawabganj Bird Sanctuary",
+          "Sandi Bird Sanctuary",
+          "Bakhira Wildlife Sanctuary"
+        ],
+        correct: 0,
+        explanation: "Upper Ganga River (Brijghat to Narora stretch) was declared UP's first Ramsar site in November 2005."
+      },
+      {
+        id: 29,
+        section: "Indian Geography",
+        topic: "Mountain Ranges & Peaks",
+        question: "Arrange the following hills of Peninsular India from North to South:\n1. Nallamala Hills\n2. Javadi Hills\n3. Nilgiri Hills\n4. Cardamom Hills",
+        options: [
+          "1 - 2 - 3 - 4",
+          "2 - 1 - 3 - 4",
+          "1 - 3 - 2 - 4",
+          "3 - 1 - 2 - 4"
+        ],
+        correct: 0,
+        explanation: "From North to South: Nallamala Hills (Andhra Pradesh) -> Javadi Hills (Northern Tamil Nadu) -> Nilgiri Hills (TN/Kerala/Karnataka junction) -> Cardamom Hills (Southern Kerala/TN)."
+      },
+      {
+        id: 30,
+        section: "Indian Geography",
+        topic: "Mineral Production",
+        question: "Which state in India holds near-monopoly in the production of Diamond and is also the leading producer of Copper and Manganese?",
+        options: [
+          "Rajasthan",
+          "Madhya Pradesh",
+          "Chhattisgarh",
+          "Odisha"
+        ],
+        correct: 1,
+        explanation: "Madhya Pradesh (Panna diamond belt, Malanjkhand copper belt, and Balaghat manganese belt) leads India in diamond, copper, and manganese production."
+      },
+      {
+        id: 31,
+        section: "Indian Geography",
+        topic: "Indian Monsoon & Climate",
+        question: "Winter rainfall in North-Western India (Punjab, Haryana, Western UP) beneficial for Rabi crops is caused by:",
+        options: [
+          "Retreating North-East Monsoon",
+          "Western Disturbances originating over the Mediterranean Sea",
+          "Tropical Cyclones from the Bay of Bengal",
+          "South-West Monsoon"
+        ],
+        correct: 1,
+        explanation: "Temperate cyclones known as Western Disturbances originate over the Mediterranean Sea and bring winter rain ('Mahawat') to north-western India."
+      },
+      {
+        id: 32,
+        section: "Indian Geography",
+        topic: "Tiger Reserves of India",
+        question: "Which Tiger Reserve in India has the highest tiger density and is famous for the Barasingha (hard-ground swamp deer)?",
+        options: [
+          "Kanha Tiger Reserve",
+          "Bandipur Tiger Reserve",
+          "Sariska Tiger Reserve",
+          "Palamu Tiger Reserve"
+        ],
+        correct: 0,
+        explanation: "Kanha Tiger Reserve (Madhya Pradesh) is famous for successfully reviving the hard-ground Barasingha (Bhoorsingh the Barasingha mascot)."
+      },
+      {
+        id: 33,
+        section: "Indian Geography",
+        topic: "Islands & Channels",
+        question: "The Ten Degree Channel separates which of the following island groups?",
+        options: [
+          "Minicoy and Maldives",
+          "Andaman Islands and Nicobar Islands",
+          "Kavaratti and Minicoy",
+          "South Andaman and Little Andaman"
+        ],
+        correct: 1,
+        explanation: "The 10° Channel separates Little Andaman (Andaman group) from Car Nicobar (Nicobar group). Duncan Passage separates South Andaman and Little Andaman."
+      },
+      {
+        id: 34,
+        section: "Indian Geography",
+        topic: "Dams & Projects",
+        question: "Idukki Dam, one of the highest arch dams in Asia, is constructed across which river in Kerala?",
+        options: [
+          "Periyar",
+          "Bharathapuzha",
+          "Pamba",
+          "Chaliyar"
+        ],
+        correct: 0,
+        explanation: "Idukki Arch Dam is built between two granite hills (Kuravan and Kurathi) across the Periyar River in Kerala."
+      },
+      {
+        id: 35,
+        section: "Indian Geography",
+        topic: "Agriculture & Crops",
+        question: "Which of the following is a Zaid crop grown between the Rabi and Kharif seasons in India?",
+        options: [
+          "Mustard",
+          "Watermelon and Cucumber",
+          "Paddy",
+          "Gram"
+        ],
+        correct: 1,
+        explanation: "Zaid crops (March to June) include watermelon, muskmelon, cucumber, bitter gourd, and fodder crops. Mustard and gram are Rabi; paddy is Kharif."
+      },
+      {
+        id: 36,
+        section: "Indian Geography",
+        topic: "UP Geography",
+        question: "Which district of Uttar Pradesh touches the boundaries of four states (Madhya Pradesh, Chhattisgarh, Jharkhand, and Bihar)?",
+        options: [
+          "Mirzapur",
+          "Sonbhadra",
+          "Chandauli",
+          "Lalitpur"
+        ],
+        correct: 1,
+        explanation: "Sonbhadra is the only district in India that shares its borders with four states: Madhya Pradesh, Chhattisgarh, Jharkhand, and Bihar."
+      },
+      {
+        id: 37,
+        section: "Indian Geography",
+        topic: "Antecedent Rivers",
+        question: "Which of the following rivers are antecedent rivers that cut deep gorges across the Great Himalayas?",
+        options: [
+          "Indus, Sutlej, and Brahmaputra",
+          "Ganga, Yamuna, and Gomti",
+          "Narmada, Tapti, and Sabarmati",
+          "Godavari, Krishna, and Cauvery"
+        ],
+        correct: 0,
+        explanation: "Indus, Sutlej, Brahmaputra, Kali, Kosi, and Teesta are classic antecedent rivers that existed before the uplift of the Himalayas and maintained their courses."
+      },
+      {
+        id: 38,
+        section: "Indian Geography",
+        topic: "Ramsar Sites of India",
+        question: "Ashtamudi Wetland and Sasthamkotta Lake, both Ramsar sites, are situated in which Indian state?",
+        options: [
+          "Tamil Nadu",
+          "Kerala",
+          "Karnataka",
+          "Andhra Pradesh"
+        ],
+        correct: 1,
+        explanation: "Ashtamudi Wetland, Sasthamkotta Lake (largest freshwater lake in Kerala), and Vembanad-Kol Wetland are famous Ramsar sites in Kerala."
+      },
+      {
+        id: 39,
+        section: "Indian Geography",
+        topic: "Mineral Production",
+        question: "Match List-I (Oil Refinery / Oilfield) with List-II (State):\nA. Digboi\nB. Ankleshwar\nC. Numaligarh\nD. Tatipaka",
+        options: [
+          "A-Assam, B-Gujarat, C-Assam, D-Andhra Pradesh",
+          "A-Gujarat, B-Assam, C-Odisha, D-Tamil Nadu",
+          "A-Assam, B-Maharashtra, C-Bihar, D-Andhra Pradesh",
+          "A-West Bengal, B-Gujarat, C-Assam, D-Kerala"
+        ],
+        correct: 0,
+        explanation: "Digboi (oldest operating refinery) and Numaligarh are in Assam; Ankleshwar is a major onshore oilfield in Gujarat; Tatipaka refinery is in Andhra Pradesh."
+      },
+      {
+        id: 40,
+        section: "Indian Geography",
+        topic: "Wildlife Sanctuaries",
+        question: "Dachigam National Park in Jammu & Kashmir is the last surviving natural habitat of which critically endangered species?",
+        options: [
+          "Snow Leopard",
+          "Hangul (Kashmir Stag)",
+          "Red Panda",
+          "Musk Deer"
+        ],
+        correct: 1,
+        explanation: "Dachigam National Park near Srinagar is famous for conserving the Hangul (Kashmir Stag), the state animal of Jammu & Kashmir."
+      },
+      {
+        id: 41,
+        section: "Indian Geography",
+        topic: "Mountain Passes",
+        question: "Which pass in Arunachal Pradesh is located near the tri-junction of India, China, and Myanmar?",
+        options: [
+          "Bomdi La",
+          "Diphu Pass",
+          "Jelep La",
+          "Lipulekh Pass"
+        ],
+        correct: 1,
+        explanation: "Diphu Pass in eastern Arunachal Pradesh lies at the strategic tri-junction of India, China, and Myanmar."
+      },
+      {
+        id: 42,
+        section: "Indian Geography",
+        topic: "Dams & Projects",
+        question: "Hirakud Dam, the longest earthen dam in the world, is built across which river?",
+        options: [
+          "Godavari",
+          "Mahanadi",
+          "Brahmani",
+          "Subarnarekha"
+        ],
+        correct: 1,
+        explanation: "Hirakud Dam (total length ~25.8 km) is constructed across the Mahanadi River near Sambalpur in Odisha."
+      },
+      {
+        id: 43,
+        section: "Indian Geography",
+        topic: "Lakes of India",
+        question: "Lonar Lake in Buldhana district of Maharashtra is a unique geological heritage site formed by:",
+        options: [
+          "Glacial erosion",
+          "Hyper-velocity meteorite impact on basaltic rock",
+          "Tectonic faulting",
+          "River meandering (Ox-bow)"
+        ],
+        correct: 1,
+        explanation: "Lonar Lake (also a Ramsar site) is a saline soda lake created by a meteorite impact during the Pleistocene Epoch in the Deccan Basalt."
+      },
+      {
+        id: 44,
+        section: "Indian Geography",
+        topic: "UP Geography & Soil",
+        question: "Which region of Uttar Pradesh is characterized by coarse pebbles and boulders brought down by Himalayan streams where rivers often disappear underground?",
+        options: [
+          "Terai Belt",
+          "Bhabar Belt",
+          "Bangar Plains",
+          "Bundelkhand Plateau"
+        ],
+        correct: 1,
+        explanation: "The Bhabar belt runs along the foothills of the Shivaliks (from Saharanpur to Kushinagar); its high porosity causes small streams to percolate underground before re-emerging in the marshy Terai."
+      },
+      {
+        id: 45,
+        section: "Indian Geography",
+        topic: "Forests & Vegetation",
+        question: "In India, Tropical Thorn Forests are predominantly found in regions receiving annual rainfall of:",
+        options: [
+          "More than 200 cm",
+          "100 cm to 200 cm",
+          "Less than 50 cm",
+          "70 cm to 100 cm"
+        ],
+        correct: 2,
+        explanation: "Tropical Thorn Forests occur in semi-arid and arid areas with less than 50 cm annual rainfall (Rajasthan, Gujarat, parts of MP, UP, Haryana)."
+      },
+      {
+        id: 46,
+        section: "Indian Geography",
+        topic: "Mineral Belts",
+        question: "Kolar and Hutti mines in Karnataka are historically and currently associated with the production of:",
+        options: [
+          "Silver",
+          "Gold",
+          "Tin",
+          "Tungsten"
+        ],
+        correct: 1,
+        explanation: "Hutti Gold Mines (Raichur, Karnataka) is currently India's only active primary gold producer, while Kolar Gold Fields (KGF) was historically famous."
+      },
+      {
+        id: 47,
+        section: "Indian Geography",
+        topic: "River Origins",
+        question: "Which of the following pairs of River and its Source is NOT correctly matched?",
+        options: [
+          "Narmada — Amarkantak Plateau",
+          "Godavari — Trimbakeshwar (Nashik)",
+          "Krishna — Mahabaleshwar",
+          "Cauvery — Pushpagiri Hills only (Maharashtra)"
+        ],
+        correct: 3,
+        explanation: "Cauvery originates at Talakaveri in the Brahmagiri Range of Kodagu district, Karnataka (not Maharashtra)."
+      },
+      {
+        id: 48,
+        section: "Indian Geography",
+        topic: "Project Elephant & Reserves",
+        question: "Which is the second Elephant Reserve of Uttar Pradesh approved under Project Elephant in the Terai region?",
+        options: [
+          "Terai Elephant Reserve (Dudhwa-Pilibhit)",
+          "Shivalik Elephant Reserve",
+          "Bundelkhand Elephant Reserve",
+          "Vindhya Elephant Reserve"
+        ],
+        correct: 0,
+        explanation: "Terai Elephant Reserve (spanning Dudhwa and Pilibhit tiger reserves) was approved as India's 33rd and UP's 2nd Elephant Reserve (after Shivalik Elephant Reserve)."
+      },
+      {
+        id: 49,
+        section: "Indian Geography",
+        topic: "Coastal Geography",
+        question: "The northern part of the western coastal plain between Mumbai and Goa is known as:",
+        options: [
+          "Malabar Coast",
+          "Konkan Coast",
+          "Coromandel Coast",
+          "Kannada Plain"
+        ],
+        correct: 1,
+        explanation: "The western coast consists of Konkan (Mumbai–Goa), Kannad Plain (central stretch), and Malabar Coast (Kerala). Coromandel is on the eastern coast."
+      },
+      {
+        id: 50,
+        section: "Indian Geography",
+        topic: "Nuclear Power Plants",
+        question: "Narora Atomic Power Station (NAPS) in Uttar Pradesh is situated on the banks of which river?",
+        options: [
+          "Yamuna",
+          "Ganga",
+          "Gomti",
+          "Ramganga"
+        ],
+        correct: 1,
+        explanation: "Narora Atomic Power Station is located in Bulandshahr district of Uttar Pradesh along the banks of the Ganga River."
+      },
+
+      // -------------------- SECTION II: MODERN HISTORY OF INDIA (Q51 - Q100) --------------------
+      {
+        id: 51,
+        section: "Modern History",
+        topic: "Arrival of Europeans (1498)",
+        question: "When Vasco da Gama landed at Calicut on 20 May 1498, which local ruler welcomed him and granted trading privileges?",
+        options: [
+          "Zamorin (Samoothiri)",
+          "Raja of Cochin",
+          "Yusuf Adil Shah",
+          "Krishnadevaraya"
+        ],
+        correct: 0,
+        explanation: "Vasco da Gama arrived at Kappad near Calicut in May 1498 and was received by the Hindu ruler of Calicut, known by the hereditary title 'Zamorin'."
+      },
+      {
+        id: 52,
+        section: "Modern History",
+        topic: "Portuguese Power in India",
+        question: "Who among the following Portuguese Governors in India introduced the 'Blue Water Policy' (Cartaze System) to establish naval supremacy in the Indian Ocean?",
+        options: [
+          "Alfonso de Albuquerque",
+          "Francisco de Almeida",
+          "Nino da Cunha",
+          "Vasco da Gama"
+        ],
+        correct: 1,
+        explanation: "Francisco de Almeida (first Portuguese Viceroy, 1505–1509) formulated the Blue Water Policy, prioritizing naval dominance over territorial forts."
+      },
+      {
+        id: 53,
+        section: "Modern History",
+        topic: "Portuguese Expansion",
+        question: "Alfonso de Albuquerque captured Goa in 1510 from the ruler of which Sultanate?",
+        options: [
+          "Ahmednagar",
+          "Bijapur",
+          "Golconda",
+          "Berar"
+        ],
+        correct: 1,
+        explanation: "Alfonso de Albuquerque, regarded as the real founder of Portuguese power in India, captured Goa from Yusuf Adil Shah, the Sultan of Bijapur, in 1510."
+      },
+      {
+        id: 54,
+        section: "Modern History",
+        topic: "European Factories in India",
+        question: "Where did the English East India Company establish its first permanent factory in India in 1613 after obtaining a Farman from Jahangir?",
+        options: [
+          "Masulipatnam",
+          "Surat",
+          "Hooghly",
+          "Madras"
+        ],
+        correct: 1,
+        explanation: "While the English opened a temporary factory at Masulipatnam in 1611, their first permanent factory was established at Surat in 1613."
+      },
+      {
+        id: 55,
+        section: "Modern History",
+        topic: "Anglo-French Rivalry",
+        question: "In the Battle of Wandiwash (1760), which decisively ended French political ambitions in India, who commanded the British forces?",
+        options: [
+          "Robert Clive",
+          "Sir Eyre Coote",
+          "Hector Munro",
+          "Lord Cornwallis"
+        ],
+        correct: 1,
+        explanation: "In the Battle of Wandiwash (January 1760, Third Carnatic War), British General Sir Eyre Coote defeated the French army led by Comte de Lally."
+      },
+      {
+        id: 56,
+        section: "Modern History",
+        topic: "British Conquest of Bengal",
+        question: "Which treaty signed in August 1765 after the Battle of Buxar granted the East India Company the Diwani rights of Bengal, Bihar, and Orissa?",
+        options: [
+          "Treaty of Alinagar",
+          "Treaty of Allahabad",
+          "Treaty of Salbai",
+          "Treaty of Seringapatam"
+        ],
+        correct: 1,
+        explanation: "Under the Treaty of Allahabad (1765), Mughal Emperor Shah Alam II granted the Diwani (right to collect revenue) of Bengal, Bihar, and Orissa to the EIC."
+      },
+      {
+        id: 57,
+        section: "Modern History",
+        topic: "Land Revenue Systems",
+        question: "Consider the following pairs of British Land Revenue Systems and their chief architects:\n1. Permanent Settlement (1793) — Lord Cornwallis & John Shore\n2. Ryotwari System — Thomas Munro & Alexander Read\n3. Mahalwari System — Holt Mackenzie\nWhich of the pairs given above are correctly matched?",
+        options: [
+          "1 and 2 only",
+          "2 and 3 only",
+          "1 and 3 only",
+          "1, 2 and 3"
+        ],
+        correct: 3,
+        explanation: "All three pairs are accurately matched: Permanent Settlement (Cornwallis/John Shore), Ryotwari (Alexander Read & Thomas Munro), and Mahalwari (Holt Mackenzie, 1822)."
+      },
+      {
+        id: 58,
+        section: "Modern History",
+        topic: "British Expansion Policies",
+        question: "Who was the first Indian ruler to accept Lord Wellesley's Subsidiary Alliance system in 1798?",
+        options: [
+          "Nawab of Awadh",
+          "Nizam of Hyderabad",
+          "Peshwa Baji Rao II",
+          "Raja of Tanjore"
+        ],
+        correct: 1,
+        explanation: "The Nizam of Hyderabad was the first ruler to sign the Subsidiary Alliance treaty with Lord Wellesley in September 1798."
+      },
+      {
+        id: 59,
+        section: "Modern History",
+        topic: "Doctrine of Lapse",
+        question: "Arrange the following states annexed by Lord Dalhousie under the Doctrine of Lapse in chronological order:\n1. Satara\n2. Jhansi\n3. Nagpur\n4. Sambalpur",
+        options: [
+          "1 - 4 - 2 - 3",
+          "1 - 2 - 3 - 4",
+          "4 - 1 - 2 - 3",
+          "1 - 4 - 3 - 2"
+        ],
+        correct: 0,
+        explanation: "Chronological order of annexation under Doctrine of Lapse: Satara (1848) -> Jaitpur & Sambalpur (1849) -> Baghat (1850) -> Udaipur (1852) -> Jhansi (1853) -> Nagpur (1854)."
+      },
+      {
+        id: 60,
+        section: "Modern History",
+        topic: "Socio-Religious Reforms",
+        question: "Who founded the 'Atmiya Sabha' in 1814 and later the 'Brahmo Sabha' (Brahmo Samaj) in 1828?",
+        options: [
+          "Debendranath Tagore",
+          "Raja Ram Mohan Roy",
+          "Keshab Chandra Sen",
+          "Ishwar Chandra Vidyasagar"
+        ],
+        correct: 1,
+        explanation: "Raja Ram Mohan Roy, known as the Father of the Indian Renaissance, established Atmiya Sabha in 1814 and Brahmo Sabha in August 1828."
+      },
+      {
+        id: 61,
+        section: "Modern History",
+        topic: "Socio-Religious Reforms",
+        question: "Who founded the 'Satyashodhak Samaj' (Truth-Seekers' Society) in 1873 in Pune to fight against caste oppression?",
+        options: [
+          "Dr. B.R. Ambedkar",
+          "Jyotirao Phule",
+          "Gopal Hari Deshmukh",
+          "Mahadev Govind Ranade"
+        ],
+        correct: 1,
+        explanation: "Jyotirao (Jyotiba) Phule founded Satyashodhak Samaj in 1873 and authored 'Gulamgiri' to champion social equality and women's education."
+      },
+      {
+        id: 62,
+        section: "Modern History",
+        topic: "Socio-Religious Reforms",
+        question: "Swami Dayanand Saraswati established the Arya Samaj in 1875 at which place?",
+        options: [
+          "Lahore",
+          "Bombay",
+          "Calcutta",
+          "Haridwar"
+        ],
+        correct: 1,
+        explanation: "Swami Dayanand Saraswati founded Arya Samaj in Bombay in 1875 (later shifting headquarters to Lahore in 1877) and gave the call 'Go Back to the Vedas'."
+      },
+      {
+        id: 63,
+        section: "Modern History",
+        topic: "Revolt of 1857",
+        question: "Where did Mangal Pandey, a sepoy of the 34th Bengal Native Infantry, fire upon British officers on 29 March 1857?",
+        options: [
+          "Meerut",
+          "Barrackpore",
+          "Ambala",
+          "Berhampore"
+        ],
+        correct: 1,
+        explanation: "Mangal Pandey revolted at Barrackpore (near Calcutta) on 29 March 1857 against the greased cartridges of the Enfield rifle and was executed on 8 April 1857."
+      },
+      {
+        id: 64,
+        section: "Modern History",
+        topic: "Revolt of 1857 — Leaders",
+        question: "Match List-I (1857 Revolt Centre) with List-II (Indian Leader):\nA. Lucknow\nB. Bareilly\nC. Jagdishpur (Bihar)\nD. Faizabad",
+        options: [
+          "A-Begum Hazrat Mahal, B-Khan Bahadur Khan, C-Kunwar Singh, D-Maulvi Ahmadullah",
+          "A-Nana Saheb, B-Kunwar Singh, C-Khan Bahadur Khan, D-Tatya Tope",
+          "A-Begum Hazrat Mahal, B-Maulvi Ahmadullah, C-Kunwar Singh, D-Bakht Khan",
+          "A-Rani Lakshmibai, B-Khan Bahadur Khan, C-Birjis Qadr, D-Maulvi Ahmadullah"
+        ],
+        correct: 0,
+        explanation: "Lucknow was led by Begum Hazrat Mahal; Bareilly (Rohilkhand) by Khan Bahadur Khan; Jagdishpur (Arrah) by Babu Kunwar Singh; and Faizabad by Maulvi Ahmadullah Shah."
+      },
+      {
+        id: 65,
+        section: "Modern History",
+        topic: "Revolt of 1857 — British Suppression",
+        question: "Which British commander famously remarked about Rani Lakshmibai of Jhansi: 'Here lay the woman who was the only man among the rebels'?",
+        options: [
+          "Sir Colin Campbell",
+          "Sir Hugh Rose",
+          "John Nicholson",
+          "Henry Havelock"
+        ],
+        correct: 1,
+        explanation: "Major General Sir Hugh Rose, who led the British Central India Field Force and captured Jhansi and Gwalior, paid this tribute to Rani Lakshmibai."
+      },
+      {
+        id: 66,
+        section: "Modern History",
+        topic: "Aftermath of 1857 Revolt",
+        question: "Under the Government of India Act 1858, who became the last Governor-General and the FIRST Viceroy of India?",
+        options: [
+          "Lord Dalhousie",
+          "Lord Canning",
+          "Lord Elgin",
+          "Lord Lawrence"
+        ],
+        correct: 1,
+        explanation: "Lord Canning served as Governor-General during the 1857 Revolt and became the first Viceroy of India following Queen Victoria's Proclamation on 1 November 1858 at Allahabad."
+      },
+      {
+        id: 67,
+        section: "Modern History",
+        topic: "Tribal & Peasant Uprisings",
+        question: "The Santhal Rebellion (Hul) of 1855–56 in the Rajmahal Hills was led by which brothers?",
+        options: [
+          "Sidhu and Kanhu Murmu",
+          "Birsa Munda and Gaya Munda",
+          "Tirot Sing and Kiang Nangbah",
+          "Alluri Sitarama Raju and Komaram Bheem"
+        ],
+        correct: 0,
+        explanation: "Sidhu, Kanhu, Chand, and Bhairav Murmu led the massive Santhal uprising (1855–56) against British officials and exploitative zamindars/mahajans."
+      },
+      {
+        id: 68,
+        section: "Modern History",
+        topic: "Vernacular Press & Viceroys",
+        question: "Who enacted the Vernacular Press Act of 1878 (known as the 'Gagging Act') and who subsequently repealed it in 1882?",
+        options: [
+          "Enacted by Lord Lytton; Repealed by Lord Ripon",
+          "Enacted by Lord Curzon; Repealed by Lord Hardinge",
+          "Enacted by Lord Mayo; Repealed by Lord Northbrook",
+          "Enacted by Lord Dufferin; Repealed by Lord Lansdowne"
+        ],
+        correct: 0,
+        explanation: "Lord Lytton passed the repressive Vernacular Press Act in 1878 to curb nationalist Indian newspapers, and Lord Ripon repealed it in 1882."
+      },
+      {
+        id: 69,
+        section: "Modern History",
+        topic: "Foundation of INC (1885)",
+        question: "The first session of the Indian National Congress was held in December 1885 at Gokuldas Tejpal Sanskrit College, Bombay, presided over by:",
+        options: [
+          "A.O. Hume",
+          "Womesh Chandra Bonnerjee",
+          "Dadabhai Naoroji",
+          "Badruddin Tyabji"
+        ],
+        correct: 1,
+        explanation: "W.C. Bonnerjee presided over the first INC session (Dec 1885) attended by 72 delegates, with A.O. Hume serving as General Secretary."
+      },
+      {
+        id: 70,
+        section: "Modern History",
+        topic: "Early INC Presidents",
+        question: "Who was the first Muslim President of the Indian National Congress (presiding over the 1887 Madras session)?",
+        options: [
+          "Maulana Abul Kalam Azad",
+          "Badruddin Tyabji",
+          "Hakim Ajmal Khan",
+          "Rahimatullah M. Sayani"
+        ],
+        correct: 1,
+        explanation: "Badruddin Tyabji became the first Muslim President of the INC at the 1887 Madras session. George Yule (1888, Allahabad) was the first European President."
+      },
+      {
+        id: 71,
+        section: "Modern History",
+        topic: "Economic Critique of British Rule",
+        question: "Who propounded the 'Drain of Wealth' theory in his famous book 'Poverty and Un-British Rule in India'?",
+        options: [
+          "R.C. Dutt",
+          "Dadabhai Naoroji",
+          "Gopal Krishna Gokhale",
+          "M.G. Ranade"
+        ],
+        correct: 1,
+        explanation: "Dadabhai Naoroji ('Grand Old Man of India') systematically exposed British economic exploitation through the Drain of Wealth theory."
+      },
+      {
+        id: 72,
+        section: "Modern History",
+        topic: "Partition of Bengal & Swadeshi",
+        question: "Lord Curzon's decision to partition Bengal came into effect on which date, observed across Bengal as a 'Day of Mourning' and 'Raksha Bandhan'?",
+        options: [
+          "7 August 1905",
+          "16 October 1905",
+          "12 December 1911",
+          "20 July 1905"
+        ],
+        correct: 1,
+        explanation: "The Partition of Bengal took effect on 16 October 1905. On Rabindranath Tagore's suggestion, people tied rakhis to symbolize Hindu-Muslim unity."
+      },
+      {
+        id: 73,
+        section: "Modern History",
+        topic: "Surat Split (1907)",
+        question: "At which session in 1907 did the Indian National Congress split into Moderates and Extremists over the presidency and Swadeshi resolutions?",
+        options: [
+          "Benaras Session",
+          "Calcutta Session",
+          "Surat Session",
+          "Lucknow Session"
+        ],
+        correct: 2,
+        explanation: "The INC split into Moderates and Extremists at the 1907 Surat Session presided over by Rash Behari Ghosh."
+      },
+      {
+        id: 74,
+        section: "Modern History",
+        topic: "Constitutional Reforms (1909)",
+        question: "Which Act introduced the system of separate communal electorates for Muslims in India for the first time?",
+        options: [
+          "Indian Councils Act, 1892",
+          "Indian Councils Act, 1909 (Morley-Minto Reforms)",
+          "Government of India Act, 1919",
+          "Government of India Act, 1935"
+        ],
+        correct: 1,
+        explanation: "The Morley-Minto Reforms (Indian Councils Act, 1909) introduced separate electorates for Muslims, earning Lord Minto the title 'Father of Communal Electorate'."
+      },
+      {
+        id: 75,
+        section: "Modern History",
+        topic: "Revolutionary Activities Abroad",
+        question: "The Ghadar Party was founded in 1913 in San Francisco (USA) with its weekly newspaper 'The Ghadar' by:",
+        options: [
+          "Shyamji Krishna Varma and Madam Cama",
+          "Lala Hardayal and Sohan Singh Bhakna",
+          "Rash Behari Bose and Sachindranath Sanyal",
+          "Virendranath Chattopadhyaya and Barkatullah"
+        ],
+        correct: 1,
+        explanation: "Sohan Singh Bhakna (President) and Lala Hardayal (General Secretary) established the Ghadar Party in San Francisco in 1913."
+      },
+      {
+        id: 76,
+        section: "Modern History",
+        topic: "Lucknow Pact (1916)",
+        question: "Who presided over the historic 1916 Lucknow Session of the INC, which saw the reunion of Moderates & Extremists and the Congress–Muslim League Pact?",
+        options: [
+          "Ambica Charan Mazumdar",
+          "Annie Besant",
+          "Bal Gangadhar Tilak",
+          "Madan Mohan Malaviya"
+        ],
+        correct: 0,
+        explanation: "Ambica Charan Mazumdar presided over the 1916 Lucknow Session where Tilak and Annie Besant played key roles in uniting Congress and signing the Lucknow Pact."
+      },
+      {
+        id: 77,
+        section: "Modern History",
+        topic: "Gandhian Satyagrahas (1917-18)",
+        question: "Who invited Mahatma Gandhi to Champaran (Bihar) in 1917 to investigate the plight of indigo farmers under the Tinkathia system?",
+        options: [
+          "Rajendra Prasad",
+          "Rajkumar Shukla",
+          "J.B. Kripalani",
+          "Mazhar-ul-Haq"
+        ],
+        correct: 1,
+        explanation: "Rajkumar Shukla, a local indigo cultivator, persuaded Mahatma Gandhi at the 1916 Lucknow Congress to visit Champaran, leading to Gandhi's first Civil Disobedience in India."
+      },
+      {
+        id: 78,
+        section: "Modern History",
+        topic: "Jallianwala Bagh Massacre (1919)",
+        question: "In protest against the Jallianwala Bagh Massacre (13 April 1919), Rabindranath Tagore renounced his Knighthood, and who resigned from the Viceroy's Executive Council?",
+        options: [
+          "C. Sankaran Nair",
+          "Tej Bahadur Sapru",
+          "Satyendra Prasanna Sinha",
+          "Madan Mohan Malaviya"
+        ],
+        correct: 0,
+        explanation: "Sir C. Sankaran Nair resigned from the Viceroy's Executive Council, while Rabindranath Tagore renounced his British Knighthood."
+      },
+      {
+        id: 79,
+        section: "Modern History",
+        topic: "Non-Cooperation Movement",
+        question: "Mahatma Gandhi abruptly called off the Non-Cooperation Movement in February 1922 following a violent incident at Chauri Chaura in which district?",
+        options: [
+          "Ballia",
+          "Gorakhpur",
+          "Deoria",
+          "Azamgarh"
+        ],
+        correct: 1,
+        explanation: "On 4/5 February 1922, protesters clashed with police and burnt a police station at Chauri Chaura in Gorakhpur district (UP), leading Gandhi to withdraw NCM via the Bardoli Resolution."
+      },
+      {
+        id: 80,
+        section: "Modern History",
+        topic: "Swaraj Party (1923)",
+        question: "Following the Gaya Session of INC (1922), who formed the 'Congress-Khilafat Swarajya Party' (Swaraj Party) on 1 January 1923?",
+        options: [
+          "Vallabhbhai Patel and Rajendra Prasad",
+          "C.R. Das and Motilal Nehru",
+          "Jawaharlal Nehru and Subhas Chandra Bose",
+          "Lala Lajpat Rai and Madan Mohan Malaviya"
+        ],
+        correct: 1,
+        explanation: "Chittaranjan Das (President) and Motilal Nehru (Secretary) founded the Swaraj Party to contest legislative council elections and obstruct British administration from within."
+      },
+      {
+        id: 81,
+        section: "Modern History",
+        topic: "Revolutionary Movement (UP)",
+        question: "The Hindustan Republican Association (HRA), which carried out the Kakori Train Action in August 1925, was founded in 1924 at:",
+        options: [
+          "Lucknow",
+          "Kanpur",
+          "Allahabad",
+          "Varanasi"
+        ],
+        correct: 1,
+        explanation: "HRA was founded in October 1924 at Kanpur by Ram Prasad Bismil, Sachindranath Sanyal, and Jogesh Chandra Chatterjee."
+      },
+      {
+        id: 82,
+        section: "Modern History",
+        topic: "Simon Commission & Nehru Report",
+        question: "Why did Indian political parties boycott the Indian Statutory Commission (Simon Commission) appointed in November 1927?",
+        options: [
+          "It proposed immediate partition of India",
+          "It was an all-white commission with no Indian member",
+          "It abolished provincial autonomy",
+          "It banned the Indian National Congress"
+        ],
+        correct: 1,
+        explanation: "The 7-member Simon Commission consisted exclusively of British Members of Parliament with zero Indian representation, sparking nationwide 'Simon Go Back' protests."
+      },
+      {
+        id: 83,
+        section: "Modern History",
+        topic: "Lahore Session (1929)",
+        question: "At the historic Lahore Session of INC in December 1929, under whose presidency was the 'Purna Swaraj' (Complete Independence) resolution passed?",
+        options: [
+          "Motilal Nehru",
+          "Jawaharlal Nehru",
+          "Mahatma Gandhi",
+          "Sardar Vallabhbhai Patel"
+        ],
+        correct: 1,
+        explanation: "Jawaharlal Nehru presided over the December 1929 Lahore Session, hoisted the tricolour on the banks of the Ravi River on 31 Dec 1929, and declared 26 January 1930 as Independence Day."
+      },
+      {
+        id: 84,
+        section: "Modern History",
+        topic: "Civil Disobedience & Dandi March",
+        question: "Mahatma Gandhi began the historic Salt March from Sabarmati Ashram to Dandi on 12 March 1930 with how many chosen followers?",
+        options: [
+          "68",
+          "72",
+          "78",
+          "84"
+        ],
+        correct: 2,
+        explanation: "Gandhi marched 240 miles from Sabarmati Ashram to Dandi with 78 satyagrahis and broke the Salt Law on 6 April 1930."
+      },
+      {
+        id: 85,
+        section: "Modern History",
+        topic: "Civil Disobedience in NWFP",
+        question: "Who led the 'Khudai Khidmatgar' (Red Shirts) movement in the North-West Frontier Province during the Civil Disobedience Movement?",
+        options: [
+          "Maulana Azad",
+          "Khan Abdul Ghaffar Khan",
+          "Saifuddin Kitchlew",
+          "Shaukat Ali"
+        ],
+        correct: 1,
+        explanation: "Khan Abdul Ghaffar Khan ('Frontier Gandhi' / Badshah Khan) organized the non-violent Khudai Khidmatgar movement in NWFP."
+      },
+      {
+        id: 86,
+        section: "Modern History",
+        topic: "Round Table Conferences",
+        question: "Which of the following leaders attended ALL THREE Round Table Conferences held in London between 1930 and 1932?",
+        options: [
+          "Mahatma Gandhi and Jawaharlal Nehru",
+          "Dr. B.R. Ambedkar and Tej Bahadur Sapru",
+          "Sardar Patel and Sarojini Naidu",
+          "Madan Mohan Malaviya and Subhas Chandra Bose"
+        ],
+        correct: 1,
+        explanation: "Dr. B.R. Ambedkar and Sir Tej Bahadur Sapru attended all three Round Table Conferences. Mahatma Gandhi attended only the Second RTC (1931) as sole INC representative."
+      },
+      {
+        id: 87,
+        section: "Modern History",
+        topic: "Poona Pact (1932)",
+        question: "The Poona Pact (September 1932), signed between Mahatma Gandhi and Dr. B.R. Ambedkar at Yerwada Jail, resulted in:",
+        options: [
+          "Separate electorates for Depressed Classes",
+          "Abandonment of separate electorates for Depressed Classes in favour of increased reserved seats in joint electorates",
+          "Immediate Dominion Status for India",
+          "Abolition of Zamindari in Bombay Presidency"
+        ],
+        correct: 1,
+        explanation: "Following Gandhi's fast unto death against Ramsay MacDonald's Communal Award, the Poona Pact replaced separate electorates with 148 reserved seats for Depressed Classes in provincial legislatures."
+      },
+      {
+        id: 88,
+        section: "Modern History",
+        topic: "Government of India Act, 1935",
+        question: "Which of the following was a key feature of the Government of India Act, 1935?",
+        options: [
+          "Introduction of Dyarchy in the Provinces",
+          "Abolition of Dyarchy in Provinces and introduction of Provincial Autonomy",
+          "Abolition of the Office of Viceroy",
+          "Grant of Universal Adult Franchise"
+        ],
+        correct: 1,
+        explanation: "The GOI Act 1935 abolished Dyarchy in the provinces (introduced by the 1919 Act), granted Provincial Autonomy, and proposed Dyarchy at the Centre and a Federal Court."
+      },
+      {
+        id: 89,
+        section: "Modern History",
+        topic: "Peasant Movements (1936)",
+        question: "Who was elected the first President of the All India Kisan Sabha (AIKS) founded at Lucknow in April 1936?",
+        options: [
+          "N.G. Ranga",
+          "Swami Sahajanand Saraswati",
+          "Baba Ramchandra",
+          "Indulal Yagnik"
+        ],
+        correct: 1,
+        explanation: "Swami Sahajanand Saraswati became the first President and Prof. N.G. Ranga the General Secretary of the All India Kisan Sabha formed in Lucknow in 1936."
+      },
+      {
+        id: 90,
+        section: "Modern History",
+        topic: "Subhas Chandra Bose & Forward Bloc",
+        question: "After resigning from the presidency of the Indian National Congress at the Tripuri Session in 1939, Subhas Chandra Bose founded which organization?",
+        options: [
+          "Azad Hind Fauj",
+          "All India Forward Bloc",
+          "Independence for India League",
+          "Indian Social Democratic Party"
+        ],
+        correct: 1,
+        explanation: "Subhas Chandra Bose defeated Pattabhi Sitaramayya at Tripuri (1939), resigned due to differences with the Congress Working Committee, and founded the Forward Bloc in May 1939."
+      },
+      {
+        id: 91,
+        section: "Modern History",
+        topic: "Individual Satyagraha (1940)",
+        question: "Who were the first and second Individual Satyagrahis chosen by Mahatma Gandhi in October 1940 against the August Offer?",
+        options: [
+          "Jawaharlal Nehru and Sardar Patel",
+          "Acharya Vinoba Bhave and Jawaharlal Nehru",
+          "Brahma Dutt and Vinoba Bhave",
+          "Maulana Azad and Rajendra Prasad"
+        ],
+        correct: 1,
+        explanation: "Acharya Vinoba Bhave was the first Individual Satyagrahi (at Paunar, Maharashtra), followed by Jawaharlal Nehru as the second and Brahma Dutt as the third."
+      },
+      {
+        id: 92,
+        section: "Modern History",
+        topic: "Cripps Mission (1942)",
+        question: "Who famously described the proposals of the Cripps Mission (1942) as 'a post-dated cheque drawn on a crashing bank'?",
+        options: [
+          "Jawaharlal Nehru",
+          "Mahatma Gandhi",
+          "Muhammad Ali Jinnah",
+          "Subhas Chandra Bose"
+        ],
+        correct: 1,
+        explanation: "Mahatma Gandhi called Sir Stafford Cripps's offer of post-war Dominion Status 'a post-dated cheque' (with 'on a crashing bank' popularly attributed alongside it)."
+      },
+      {
+        id: 93,
+        section: "Modern History",
+        topic: "Quit India Movement (1942)",
+        question: "At which historic ground in Bombay did the AICC ratify the Quit India Resolution on 8 August 1942, where Gandhi gave the mantra 'Do or Die'?",
+        options: [
+          "Shivaji Park",
+          "Gowalia Tank Maidan (August Kranti Maidan)",
+          "Azad Maidan",
+          "Cross Maidan"
+        ],
+        correct: 1,
+        explanation: "On 8 August 1942 at Gowalia Tank Maidan in Bombay, the Quit India Resolution was passed and Aruna Asaf Ali hoisted the Indian National Flag on 9 August."
+      },
+      {
+        id: 94,
+        section: "Modern History",
+        topic: "Parallel Governments in 1942",
+        question: "During the Quit India Movement of 1942, the first parallel national government ('Jatiya Sarkar' / local independent administration) in UP was established at Ballia under the leadership of:",
+        options: [
+          "Chittu Pandey",
+          "Y.B. Chavan",
+          "Satish Chandra Samanta",
+          "Nana Patil"
+        ],
+        correct: 0,
+        explanation: "Chittu Pandey ('Sher-e-Ballia') established a parallel government in Ballia (UP) in August 1942. Other parallel governments arose in Tamluk (Midnapore) and Satara (Prati Sarkar)."
+      },
+      {
+        id: 95,
+        section: "Modern History",
+        topic: "Indian National Army (INA)",
+        question: "Where did Subhas Chandra Bose proclaim the formation of the Provisional Government of Free India (Azad Hind Sarkar) on 21 October 1943?",
+        options: [
+          "Tokyo",
+          "Singapore",
+          "Rangoon",
+          "Bangkok"
+        ],
+        correct: 1,
+        explanation: "Netaji Subhas Chandra Bose established the Provisional Government of Free India (Arzi Hukumat-e-Azad Hind) in Singapore on 21 October 1943."
+      },
+      {
+        id: 96,
+        section: "Modern History",
+        topic: "INA Trials (1945)",
+        question: "Who among the following INA officers were tried together in the famous first Red Fort Trial in November 1945?",
+        options: [
+          "Prem Kumar Sahgal, Gurbaksh Singh Dhillon, and Shah Nawaz Khan",
+          "Mohan Singh, Rash Behari Bose, and Lakshmi Sahgal",
+          "Shahnawaz Khan, Abid Hasan, and Pritam Singh",
+          "Gurbaksh Singh Dhillon, Mohan Singh, and Habib-ur-Rahman"
+        ],
+        correct: 0,
+        explanation: "Colonel Prem Sahgal, Colonel Gurbaksh Singh Dhillon, and Major General Shah Nawaz Khan were tried at Delhi's Red Fort, defended by Bhulabhai Desai, Tej Bahadur Sapru, and Jawaharlal Nehru."
+      },
+      {
+        id: 97,
+        section: "Modern History",
+        topic: "Cabinet Mission Plan (1946)",
+        question: "Who were the three British Cabinet Ministers sent to India in March 1946 under the Cabinet Mission Plan?",
+        options: [
+          "Lord Pethick-Lawrence, Sir Stafford Cripps, and A.V. Alexander",
+          "Lord Wavell, Sir Stafford Cripps, and Lord Mountbatten",
+          "Clement Attlee, Lord Pethick-Lawrence, and Sir John Simon",
+          "Lord Linlithgow, A.V. Alexander, and Lord Pethick-Lawrence"
+        ],
+        correct: 0,
+        explanation: "The Cabinet Mission (1946) comprised Lord Pethick-Lawrence (Secretary of State for India), Sir Stafford Cripps (President of Board of Trade), and A.V. Alexander (First Lord of Admiralty)."
+      },
+      {
+        id: 98,
+        section: "Modern History",
+        topic: "Interim Government (1946)",
+        question: "In the Interim Government of India formed in September 1946, who held the portfolio of Labour Minister?",
+        options: [
+          "Jagjivan Ram",
+          "Rajendra Prasad",
+          "Sardar Baldev Singh",
+          "Asaf Ali"
+        ],
+        correct: 0,
+        explanation: "Babu Jagjivan Ram was the Minister of Labour in the 1946 Interim Government; Rajendra Prasad held Food & Agriculture; Baldev Singh held Defence."
+      },
+      {
+        id: 99,
+        section: "Modern History",
+        topic: "Mountbatten Plan (3 June 1947)",
+        question: "Under the Mountbatten Plan (3 June 1947), a referendum was held to decide the future of which two regions?",
+        options: [
+          "Punjab and Bengal",
+          "North-West Frontier Province (NWFP) and Sylhet district of Assam",
+          "Sindh and Baluchistan",
+          "Hyderabad and Junagadh"
+        ],
+        correct: 1,
+        explanation: "The Mountbatten Plan mandated referendums in the North-West Frontier Province (NWFP) and the Sylhet district of Assam, both of which voted to join Pakistan."
+      },
+      {
+        id: 100,
+        section: "Modern History",
+        topic: "Indian Independence Act, 1947",
+        question: "The Indian Independence Bill was introduced in the British Parliament on 4 July 1947 and received Royal Assent on:",
+        options: [
+          "18 July 1947",
+          "14 August 1947",
+          "15 August 1947",
+          "3 June 1947"
+        ],
+        correct: 0,
+        explanation: "The Indian Independence Act, 1947 received Royal Assent from King George VI on 18 July 1947, leading to the creation of the independent Dominions of India and Pakistan on 15 August 1947."
+      }
+    ];
+
+    // =========================================================================
+    // 2. FIREBASE INITIALIZATION & LIVE TELEGRAM POLL SYNC
+    // =========================================================================
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'uppsc-telegram-poll-v1';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+
+    let app = null;
+    let auth = null;
+    let db = null;
+    let currentUser = null;
+    let unsubscribeRoom = null;
+    let unsubscribeHost = null;
+
+    // Check URL ?room=CODE so shared links open the exact same live room automatically
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialRoomCode = (urlParams.get('room') || 'UPPSC-LIVE')
+      .toUpperCase()
+      .replace(/[^A-Z0-9_-]/g, '')
+      .slice(0, 20) || 'UPPSC-LIVE';
+
+    const pollState = {
+      joined: false,
+      currentView: 'entry',
+      roomCode: initialRoomCode,
+      candidateName: '',
+      city: '',
+      currentIndex: 0,
+      hostSyncEnabled: false,
+      // Local map of user's own votes { [qIndex]: optionIndex }
+      myAnswers: {},
+      // All participants in this room from Firestore: [ { odId, name, city, answers: { "0": 2, ... }, updatedAt } ]
+      participants: [],
+      // Aggregated vote counts per question: voteMatrix[qIndex] = [opt0Count, opt1Count, opt2Count, opt3Count]
+      voteMatrix: Array.from({ length: 100 }, () => [0, 0, 0, 0]),
+      selectedScorecard: null,
+      solutionFilter: 'ALL'
+    };
+
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const colors = {
+        success: 'bg-emerald-600 text-white border-emerald-500',
+        error: 'bg-rose-600 text-white border-rose-500',
+        info: 'bg-[#17212b] text-white border-[#5288c1]'
+      };
+      el.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-xl border text-xs sm:text-sm font-semibold transition-all ${colors[type] || colors.info}`;
+      el.textContent = msg;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 250);
+      }, 3000);
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    async function initFirebase() {
+      const roomInput = document.getElementById('cand-room');
+      if (roomInput) roomInput.value = pollState.roomCode;
+      updateRoomLabels();
+
+      if (!firebaseConfig) {
+        renderEntryMiniLeaderboard();
+        return;
+      }
+
+      try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+        currentUser = auth.currentUser;
+        subscribeToRoomData(pollState.roomCode);
+      } catch (err) {
+        console.error('Firebase init error:', err);
+      }
+    }
+
+    function updateRoomLabels() {
+      const rc = pollState.roomCode;
+      document.getElementById('header-room-subtitle').textContent = `Room: ${rc} • 100 UPPSC MCQs`;
+      document.getElementById('entry-room-label').textContent = `Room: ${rc}`;
+      document.getElementById('poll-room-badge').textContent = `ROOM: ${rc}`;
+      document.getElementById('lb-room-title').textContent = `Live Rankings — Room ${rc}`;
+    }
+
+    // Real-time Firestore listener for all participants & votes in the active room
+    function subscribeToRoomData(roomCode) {
+      if (!db || !currentUser) return;
+      if (unsubscribeRoom) unsubscribeRoom();
+      if (unsubscribeHost) unsubscribeHost();
+
+      // RULE 1 & RULE 2: Strict public collection path, no orderBy/where compound queries
+      const roomVotesCol = collection(db, 'artifacts', appId, 'public', 'data', `uppsc_poll_${roomCode}`);
+
+      unsubscribeRoom = onSnapshot(
+        roomVotesCol,
+        (snapshot) => {
+          const usersList = [];
+          const matrix = Array.from({ length: 100 }, () => [0, 0, 0, 0]);
+
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const ansMap = data.answers || {};
+
+            // Sync current user's previously saved answers if rejoining
+            if (currentUser && docSnap.id === currentUser.uid) {
+              Object.keys(ansMap).forEach((k) => {
+                pollState.myAnswers[Number(k)] = Number(ansMap[k]);
+              });
+            }
+
+            // Tally votes per option for every question
+            let correct = 0;
+            let wrong = 0;
+            let answered = 0;
+            let geoCorrect = 0, geoWrong = 0;
+            let histCorrect = 0, histWrong = 0;
+
+            Object.entries(ansMap).forEach(([qIdxStr, optIdxVal]) => {
+              const qIdx = Number(qIdxStr);
+              const optIdx = Number(optIdxVal);
+              if (qIdx >= 0 && qIdx < 100 && optIdx >= 0 && optIdx <= 3) {
+                matrix[qIdx][optIdx] += 1;
+                answered++;
+                if (UPPSC_QUESTIONS[qIdx].correct === optIdx) {
+                  correct++;
+                  if (qIdx < 50) geoCorrect++;
+                  else histCorrect++;
+                } else {
+                  wrong++;
+                  if (qIdx < 50) geoWrong++;
+                  else histWrong++;
+                }
+              }
+            });
+
+            const netScore = Number((correct * 1.33 - wrong * 0.33).toFixed(2));
+            const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+
+            usersList.push({
+              id: docSnap.id,
+              candidateName: data.candidateName || 'Participant',
+              city: data.city || '',
+              answers: ansMap,
+              answeredCount: answered,
+              correctCount: correct,
+              wrongCount: wrong,
+              unattemptedCount: 100 - answered,
+              accuracy,
+              netScore,
+              geoStats: {
+                correct: geoCorrect,
+                wrong: geoWrong,
+                score: Number((geoCorrect * 1.33 - geoWrong * 0.33).toFixed(2))
+              },
+              histStats: {
+                correct: histCorrect,
+                wrong: histWrong,
+                score: Number((histCorrect * 1.33 - histWrong * 0.33).toFixed(2))
+              },
+              updatedAt: data.updatedAt || 0
+            });
+          });
+
+          // Rank participants by Net Score descending, then Correct count, then earliest timestamp
+          usersList.sort((a, b) => {
+            if (Math.abs(b.netScore - a.netScore) > 0.001) return b.netScore - a.netScore;
+            if (b.correctCount !== a.correctCount) return b.correctCount - a.correctCount;
+            return (a.updatedAt || 0) - (b.updatedAt || 0);
+          });
+
+          pollState.participants = usersList;
+          pollState.voteMatrix = matrix;
+
+          document.getElementById('header-participant-count').textContent = usersList.length;
+          renderEntryMiniLeaderboard();
+
+          if (pollState.currentView === 'poll') {
+            renderActivePollCard();
+            refreshPollGridDrawer();
+          } else if (pollState.currentView === 'leaderboard') {
+            renderLeaderboardTable();
+          } else if (pollState.currentView === 'scorecard' && pollState.selectedScorecard) {
+            const refreshed = usersList.find((u) => u.id === pollState.selectedScorecard.id);
+            if (refreshed) openParticipantScorecard(refreshed);
+          }
+        },
+        (err) => {
+          console.error('Room snapshot error:', err);
+        }
+      );
+
+      // Listen to live room host pointer for synchronized group attempt
+      const hostDocRef = doc(db, 'artifacts', appId, 'public', 'data', `uppsc_host_${roomCode}`, 'state');
+      unsubscribeHost = onSnapshot(
+        hostDocRef,
+        (docSnap) => {
+          if (!docSnap.exists()) return;
+          const data = docSnap.data();
+          if (
+            pollState.hostSyncEnabled &&
+            typeof data.activeIndex === 'number' &&
+            data.activeIndex !== pollState.currentIndex &&
+            data.updatedBy !== (currentUser?.uid || '')
+          ) {
+            pollState.currentIndex = data.activeIndex;
+            if (pollState.currentView === 'poll') {
+              renderActivePollCard();
+              refreshPollGridDrawer();
+              showToast(`Synced to Question ${data.activeIndex + 1}`, 'info');
+            }
+          }
+        },
+        () => {}
+      );
+    }
+
+    // Listen to room input changes on Entry screen so user sees live room members immediately
+    document.getElementById('cand-room').addEventListener('change', (e) => {
+      const cleaned = (e.target.value || 'UPPSC-LIVE').toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 20) || 'UPPSC-LIVE';
+      e.target.value = cleaned;
+      pollState.roomCode = cleaned;
+      updateRoomLabels();
+      subscribeToRoomData(cleaned);
+    });
+
+    window.generateNewRoomCode = function () {
+      const randomCode = `UPPSC-${Math.floor(100 + Math.random() * 900)}`;
+      const input = document.getElementById('cand-room');
+      input.value = randomCode;
+      pollState.roomCode = randomCode;
+      updateRoomLabels();
+      subscribeToRoomData(randomCode);
+      showToast(`Created Room ${randomCode}! Click "Invite Friend" to share.`, 'success');
+    };
+
+    // =========================================================================
+    // 3. VIEW MANAGEMENT & JOINING POLL
+    // =========================================================================
+    window.switchView = function (viewName) {
+      pollState.currentView = viewName;
+      ['entry', 'poll', 'leaderboard', 'scorecard'].forEach((v) => {
+        document.getElementById(`view-${v}`).classList.toggle('hidden', v !== viewName);
+      });
+
+      const pollBtn = document.getElementById('nav-btn-poll');
+      const lbBtn = document.getElementById('nav-btn-leaderboard');
+      pollBtn.classList.toggle('hidden', !pollState.joined);
+
+      if (viewName === 'poll') {
+        pollBtn.className = 'px-3 py-1.5 rounded-full text-xs font-bold bg-[#5288c1] text-white transition';
+        lbBtn.className = 'px-3 py-1.5 rounded-full text-xs font-bold bg-[#202b36] hover:bg-[#2a3846] text-slate-200 border border-[#2f3e4e] transition flex items-center gap-1.5';
+        renderActivePollCard();
+        refreshPollGridDrawer();
+      } else if (viewName === 'leaderboard' || viewName === 'scorecard') {
+        pollBtn.className = 'px-3 py-1.5 rounded-full text-xs font-bold bg-[#202b36] hover:bg-[#2a3846] text-slate-200 border border-[#2f3e4e] transition';
+        lbBtn.className = 'px-3 py-1.5 rounded-full text-xs font-bold bg-[#5288c1] text-white transition flex items-center gap-1.5';
+        if (viewName === 'leaderboard') renderLeaderboardTable();
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.returnToPollOrEntry = function () {
+      switchView(pollState.joined ? 'poll' : 'entry');
+    };
+
+    document.getElementById('candidate-start-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('cand-name').value.trim();
+      if (!name) {
+        showToast('Please enter your Name first.', 'error');
+        return;
+      }
+
+      const roomRaw = document.getElementById('cand-room').value.trim() || 'UPPSC-LIVE';
+      const roomCode = roomRaw.toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 20) || 'UPPSC-LIVE';
+      const city = document.getElementById('cand-city').value.trim() || 'UP';
+
+      const roomChanged = roomCode !== pollState.roomCode;
+      pollState.roomCode = roomCode;
+      pollState.candidateName = name;
+      pollState.city = city;
+      pollState.joined = true;
+
+      // Update URL with ?room=CODE without reloading so sharing browser URL works anytime
+      try {
+        const nextUrl = new URL(window.location.href);
+        nextUrl.searchParams.set('room', roomCode);
+        window.history.replaceState({}, '', nextUrl.toString());
+      } catch (_) {}
+
+      updateRoomLabels();
+      if (roomChanged) {
+        pollState.myAnswers = {};
+        subscribeToRoomData(roomCode);
+      }
+
+      buildPollGridDrawer();
+      await syncMyVotesToFirestore();
+      switchView('poll');
+      showToast(`Joined Room ${roomCode} as ${name}!`, 'success');
+    });
+
+    async function syncMyVotesToFirestore() {
+      if (!db || !currentUser || !pollState.joined) return;
+      const myDocRef = doc(db, 'artifacts', appId, 'public', 'data', `uppsc_poll_${pollState.roomCode}`, currentUser.uid);
+      try {
+        await setDoc(
+          myDocRef,
+          {
+            candidateName: pollState.candidateName,
+            city: pollState.city,
+            answers: pollState.myAnswers,
+            updatedAt: Date.now()
+          },
+          { merge: true }
+        );
+      } catch (err) {
+        console.error('Error syncing vote:', err);
+      }
+    }
+
+    // =========================================================================
+    // 4. TELEGRAM QUIZ POLL RENDERING & LIVE VOTE INTERACTION
+    // =========================================================================
+    function renderActivePollCard() {
+      const idx = pollState.currentIndex;
+      const q = UPPSC_QUESTIONS[idx];
+      const userChoice = pollState.myAnswers[idx];
+      const hasVoted = userChoice !== undefined && userChoice !== null;
+      const counts = pollState.voteMatrix[idx] || [0, 0, 0, 0];
+      const totalVotes = counts.reduce((sum, c) => sum + c, 0);
+
+      // Update personal live score pill
+      let myCorrect = 0;
+      let myWrong = 0;
+      Object.entries(pollState.myAnswers).forEach(([qI, optI]) => {
+        if (UPPSC_QUESTIONS[Number(qI)].correct === Number(optI)) myCorrect++;
+        else myWrong++;
+      });
+      const myNet = (myCorrect * 1.33 - myWrong * 0.33).toFixed(2);
+      const answeredTotal = Object.keys(pollState.myAnswers).length;
+      document.getElementById('poll-personal-score').textContent = `Score: ${myNet} (${myCorrect}✓ / ${myWrong}✕)`;
+      document.getElementById('poll-progress-badge').textContent = `${answeredTotal}/100`;
+
+      // Populate Poll Card Header & Text
+      document.getElementById('poll-q-badge').textContent = `Question ${q.id} / 100`;
+      document.getElementById('poll-section-tag').textContent = `${q.section} • ${q.topic}`;
+      document.getElementById('poll-q-text').textContent = q.question;
+
+      // Render Options (Telegram Poll Style: selectable before vote, animated bars + vote counts after vote)
+      const container = document.getElementById('poll-options-container');
+      container.innerHTML = '';
+      const letters = ['A', 'B', 'C', 'D'];
+
+      q.options.forEach((optText, optIdx) => {
+        const voteCount = counts[optIdx] || 0;
+        const pct = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
+        const isCorrectOpt = optIdx === q.correct;
+        const isUserPick = optIdx === userChoice;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.disabled = hasVoted;
+
+        if (!hasVoted) {
+          // Unvoted Telegram Quiz Poll Option
+          btn.className = 'w-full text-left p-3.5 sm:p-4 rounded-xl bg-[#0e1621]/85 hover:bg-[#202f40] border border-[#2b3d52] hover:border-[#6ab2f2] transition flex items-center gap-3 group cursor-pointer';
+          btn.innerHTML = `
+            <span class="w-7 h-7 rounded-full border-2 border-[#4d6885] group-hover:border-[#6ab2f2] text-xs font-extrabold text-[#9eb1c4] group-hover:text-white flex items-center justify-center shrink-0 transition">
+              ${letters[optIdx]}
+            </span>
+            <span class="text-sm sm:text-base font-medium text-slate-100 leading-snug">${escapeHtml(optText)}</span>
+          `;
+          btn.onclick = () => submitPollVote(optIdx);
+        } else {
+          // Voted State: Show Telegram Progress Bar, People Count, Percentage, and Green/Red Icon
+          let borderClass = 'border-[#29394b] bg-[#0e1621]/70';
+          let barColor = 'bg-slate-600/30';
+          let iconHtml = `<span class="w-7 h-7 rounded-full bg-[#1d2b3a] text-[#7f91a4] text-xs font-bold flex items-center justify-center shrink-0">${letters[optIdx]}</span>`;
+          let pctColor = 'text-[#9eb1c4]';
+
+          if (isCorrectOpt) {
+            borderClass = 'border-emerald-500/80 bg-emerald-950/35';
+            barColor = 'bg-emerald-500/25';
+            pctColor = 'text-emerald-300 font-extrabold';
+            iconHtml = `
+              <span class="w-7 h-7 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center shrink-0 shadow">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </span>
+            `;
+          } else if (isUserPick) {
+            borderClass = 'border-rose-500/80 bg-rose-950/35';
+            barColor = 'bg-rose-500/25';
+            pctColor = 'text-rose-300 font-extrabold';
+            iconHtml = `
+              <span class="w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center shrink-0 shadow">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </span>
+            `;
+          }
+
+          const peopleWord = voteCount === 1 ? 'person' : 'people';
+          const youTag = isUserPick ? `<span class="ml-1.5 px-1.5 py-0.2 rounded bg-white/10 text-[10px] font-bold uppercase text-white">You</span>` : '';
+
+          btn.className = `relative w-full text-left p-3.5 sm:p-4 rounded-xl border ${borderClass} overflow-hidden transition cursor-default`;
+          btn.innerHTML = `
+            <!-- Animated Vote Percentage Background Fill -->
+            <div class="poll-bar-fill absolute inset-y-0 left-0 ${barColor} pointer-events-none" style="width: ${pct}%"></div>
+
+            <div class="relative z-10 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                ${iconHtml}
+                <div class="min-w-0">
+                  <div class="text-sm sm:text-base font-semibold text-white leading-snug">
+                    ${escapeHtml(optText)}${youTag}
+                  </div>
+                  <div class="text-[11px] text-[#9eb1c4] mt-0.5 font-medium">
+                    ${voteCount} ${peopleWord} selected Option ${letters[optIdx]}
+                  </div>
+                </div>
+              </div>
+
+              <div class="text-right shrink-0 pl-2">
+                <span class="text-sm sm:text-base ${pctColor}">${pct}%</span>
+              </div>
+            </div>
+          `;
+        }
+
+        container.appendChild(btn);
+      });
+
+      // Explanation Bulb Box
+      const expBox = document.getElementById('poll-explanation-box');
+      const verdictEl = document.getElementById('poll-result-verdict');
+      const expTextEl = document.getElementById('poll-explanation-text');
+
+      if (hasVoted) {
+        expBox.classList.remove('hidden');
+        const isRight = userChoice === q.correct;
+        verdictEl.className = isRight
+          ? 'text-xs font-extrabold uppercase tracking-wider text-emerald-400'
+          : 'text-xs font-extrabold uppercase tracking-wider text-rose-400';
+        verdictEl.textContent = isRight
+          ? `✓ Correct Answer! (+1.33 Marks)`
+          : `✕ Incorrect (-0.33 Marks) • Correct Option: (${letters[q.correct]})`;
+        expTextEl.textContent = q.explanation;
+      } else {
+        expBox.classList.add('hidden');
+      }
+
+      // Footer Total Votes Count
+      const totalWord = totalVotes === 1 ? 'person' : 'people';
+      document.getElementById('poll-total-votes').textContent = `${totalVotes} ${totalWord} voted on this question`;
+      document.getElementById('poll-user-status').textContent = hasVoted
+        ? 'Live results • Updates as friends vote'
+        : 'Tap an option to reveal answer & live votes';
+
+      document.getElementById('btn-poll-prev').disabled = idx === 0;
+      document.getElementById('btn-poll-next').textContent = idx === 99 ? 'View Final Rankings →' : 'Next Question →';
+    }
+
+    async function submitPollVote(optIdx) {
+      const idx = pollState.currentIndex;
+      if (pollState.myAnswers[idx] !== undefined) return;
+
+      // Record vote locally immediately for zero-latency Telegram poll reveal
+      pollState.myAnswers[idx] = optIdx;
+      pollState.voteMatrix[idx][optIdx] = (pollState.voteMatrix[idx][optIdx] || 0) + 1;
+
+      renderActivePollCard();
+      refreshPollGridDrawer();
+
+      // Broadcast vote to Firestore so friend's phone updates in real time
+      await syncMyVotesToFirestore();
+    }
+
+    window.navigatePoll = async function (delta) {
+      const nextIdx = pollState.currentIndex + delta;
+      if (nextIdx < 0) return;
+      if (nextIdx >= 100) {
+        switchView('leaderboard');
+        return;
+      }
+      pollState.currentIndex = nextIdx;
+      renderActivePollCard();
+      refreshPollGridDrawer();
+      await broadcastHostQuestionIndex(nextIdx);
+    };
+
+    window.jumpToPollQuestion = async function (idx) {
+      pollState.currentIndex = idx;
+      renderActivePollCard();
+      refreshPollGridDrawer();
+      document.getElementById('poll-grid-drawer').classList.add('hidden');
+      await broadcastHostQuestionIndex(idx);
+    };
+
+    window.toggleHostSyncMode = async function () {
+      pollState.hostSyncEnabled = !pollState.hostSyncEnabled;
+      const dot = document.getElementById('sync-dot');
+      const label = document.getElementById('sync-label');
+      if (pollState.hostSyncEnabled) {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping';
+        label.textContent = 'Follow Room Host: ON';
+        showToast('Host Sync ON — Moving Next/Prev will sync with friends who turn Sync ON.', 'info');
+        await broadcastHostQuestionIndex(pollState.currentIndex);
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-slate-500';
+        label.textContent = 'Follow Room Host: OFF';
+      }
+    };
+
+    async function broadcastHostQuestionIndex(idx) {
+      if (!pollState.hostSyncEnabled || !db || !currentUser) return;
+      const hostDocRef = doc(db, 'artifacts', appId, 'public', 'data', `uppsc_host_${pollState.roomCode}`, 'state');
+      try {
+        await setDoc(hostDocRef, {
+          activeIndex: idx,
+          updatedBy: currentUser.uid,
+          updatedAt: Date.now()
+        });
+      } catch (_) {}
+    }
+
+    window.toggleQuestionGridDrawer = function () {
+      document.getElementById('poll-grid-drawer').classList.toggle('hidden');
+      refreshPollGridDrawer();
+    };
+
+    function buildPollGridDrawer() {
+      const g1 = document.getElementById('poll-grid-sec1');
+      const g2 = document.getElementById('poll-grid-sec2');
+      g1.innerHTML = '';
+      g2.innerHTML = '';
+      for (let i = 0; i < 100; i++) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.id = `pgrid-btn-${i}`;
+        b.textContent = i + 1;
+        b.onclick = () => jumpToPollQuestion(i);
+        if (i < 50) g1.appendChild(b);
+        else g2.appendChild(b);
+      }
+    }
+
+    function refreshPollGridDrawer() {
+      for (let i = 0; i < 100; i++) {
+        const b = document.getElementById(`pgrid-btn-${i}`);
+        if (!b) continue;
+        const ans = pollState.myAnswers[i];
+        const isCurrent = i === pollState.currentIndex;
+        let cls = 'h-8 rounded-lg text-[11px] font-bold transition ';
+        if (ans === undefined) {
+          cls += 'bg-[#0e1621] text-[#7f91a4] border border-[#232e3c] hover:border-[#6ab2f2]';
+        } else if (ans === UPPSC_QUESTIONS[i].correct) {
+          cls += 'bg-emerald-600 text-white';
+        } else {
+          cls += 'bg-rose-600 text-white';
+        }
+        if (isCurrent) cls += ' ring-2 ring-sky-400 scale-105';
+        b.className = cls;
+      }
+    }
+
+    // =========================================================================
+    // 5. LIVE LEADERBOARD & PARTICIPANT SCORECARD VIEWER
+    // =========================================================================
+    function renderEntryMiniLeaderboard() {
+      const box = document.getElementById('entry-mini-leaderboard');
+      const top5 = pollState.participants.slice(0, 5);
+      if (top5.length === 0) {
+        box.innerHTML = `<div class="text-xs text-[#7f91a4] py-5 text-center bg-[#0e1621] rounded-xl border border-dashed border-[#232e3c]">No participants in Room <strong>${escapeHtml(pollState.roomCode)}</strong> yet. Join now!</div>`;
+        return;
+      }
+
+      box.innerHTML = '';
+      top5.forEach((p, idx) => {
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.onclick = () => openParticipantScorecard(p);
+        row.className = 'w-full flex items-center justify-between p-2.5 rounded-xl bg-[#0e1621] hover:bg-[#1e2c3a] border border-[#232e3c] text-left transition';
+        row.innerHTML = `
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span class="w-6 h-6 rounded-full font-extrabold text-xs flex items-center justify-center shrink-0 ${
+              idx === 0 ? 'bg-amber-400 text-slate-950' : idx === 1 ? 'bg-slate-300 text-slate-900' : idx === 2 ? 'bg-orange-400 text-slate-950' : 'bg-[#202b36] text-slate-300'
+            }">#${idx + 1}</span>
+            <div class="truncate">
+              <div class="text-xs font-bold text-white truncate">${escapeHtml(p.candidateName)}</div>
+              <div class="text-[10px] text-[#7f91a4]">${p.answeredCount}/100 Qs • ${p.accuracy}% acc</div>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="text-xs font-extrabold text-emerald-400">${Number(p.netScore).toFixed(2)}</div>
+            <div class="text-[10px] text-[#7f91a4]">pts</div>
+          </div>
+        `;
+        box.appendChild(row);
+      });
+    }
+
+    window.renderLeaderboardTable = function () {
+      const podium = document.getElementById('lb-top3-cards');
+      const tbody = document.getElementById('lb-table-body');
+      podium.innerHTML = '';
+      tbody.innerHTML = '';
+
+      if (pollState.participants.length === 0) {
+        podium.innerHTML = `
+          <div class="col-span-full bg-[#17212b] rounded-2xl border border-[#232e3c] p-8 text-center">
+            <h3 class="text-base font-bold text-white">No Votes Recorded Yet in Room ${escapeHtml(pollState.roomCode)}</h3>
+            <p class="text-xs text-[#7f91a4] mt-1">Share the invite link with your friend and start tapping answers!</p>
+          </div>
+        `;
+        return;
+      }
+
+      const badges = [
+        { label: 'Rank #1', border: 'border-amber-400/70', pill: 'bg-amber-400 text-slate-950' },
+        { label: 'Rank #2', border: 'border-slate-400/50', pill: 'bg-slate-300 text-slate-900' },
+        { label: 'Rank #3', border: 'border-orange-400/60', pill: 'bg-orange-400 text-slate-950' }
+      ];
+
+      badges.forEach((b, idx) => {
+        const p = pollState.participants[idx];
+        if (!p) return;
+        const card = document.createElement('div');
+        card.className = `bg-[#17212b] rounded-2xl border ${b.border} p-4 flex flex-col justify-between shadow-lg`;
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold ${b.pill}">${b.label}</span>
+              <span class="text-[11px] text-[#7f91a4]">${p.answeredCount}/100 Qs</span>
+            </div>
+            <h3 class="text-base font-extrabold text-white truncate">${escapeHtml(p.candidateName)}</h3>
+            <p class="text-[11px] text-[#7f91a4]">${escapeHtml(p.city || 'UP')} • ${p.accuracy}% accuracy</p>
+          </div>
+          <div class="mt-3 pt-2.5 border-t border-[#232e3c] flex items-center justify-between">
+            <span class="text-lg font-extrabold text-emerald-400">${Number(p.netScore).toFixed(2)} <span class="text-[11px] font-normal text-[#7f91a4]">pts</span></span>
+            <button onclick="openScorecardByIndex(${idx})" class="px-3 py-1 rounded-lg bg-[#2b5278] hover:bg-[#356391] text-white text-xs font-bold">
+              Scorecard
+            </button>
+          </div>
+        `;
+        podium.appendChild(card);
+      });
+
+      pollState.participants.forEach((p, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-[#1e2b38] transition-colors';
+        tr.innerHTML = `
+          <td class="py-3.5 px-4 font-extrabold text-amber-400">#${idx + 1}</td>
+          <td class="py-3.5 px-4">
+            <div class="font-bold text-white">${escapeHtml(p.candidateName)}</div>
+            <div class="text-[11px] text-[#7f91a4]">${escapeHtml(p.city || 'India')}</div>
+          </td>
+          <td class="py-3.5 px-4 text-center text-slate-300 font-semibold">${p.answeredCount}/100</td>
+          <td class="py-3.5 px-4 text-center font-bold text-emerald-400">${p.correctCount}</td>
+          <td class="py-3.5 px-4 text-center font-bold text-rose-400">${p.wrongCount}</td>
+          <td class="py-3.5 px-4 text-center text-slate-300 font-semibold">${p.accuracy}%</td>
+          <td class="py-3.5 px-4 text-right font-extrabold text-sky-300 text-base">${Number(p.netScore).toFixed(2)}</td>
+          <td class="py-3.5 px-4 text-right">
+            <button onclick="openScorecardByIndex(${idx})" class="px-3 py-1.5 rounded-lg bg-[#5288c1] hover:bg-[#467ab2] text-white text-xs font-bold">
+              View
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    };
+
+    window.openScorecardByIndex = function (idx) {
+      const p = pollState.participants[idx];
+      if (p) openParticipantScorecard(p);
+    };
+
+    function openParticipantScorecard(p) {
+      pollState.selectedScorecard = p;
+      pollState.solutionFilter = 'ALL';
+
+      const rankIdx = pollState.participants.findIndex((u) => u.id === p.id);
+      const displayRank = rankIdx >= 0 ? rankIdx + 1 : 1;
+
+      document.getElementById('sc-candidate-name').textContent = p.candidateName;
+      document.getElementById('sc-candidate-meta').textContent = `Room: ${pollState.roomCode} • City: ${p.city || 'UP'}`;
+      document.getElementById('sc-rank-badge').textContent = `#${displayRank}`;
+      document.getElementById('sc-net-score').textContent = Number(p.netScore).toFixed(2);
+
+      document.getElementById('sc-attempted').textContent = `${p.answeredCount} / 100`;
+      document.getElementById('sc-correct').textContent = p.correctCount;
+      document.getElementById('sc-wrong').textContent = p.wrongCount;
+      document.getElementById('sc-unattempted').textContent = p.unattemptedCount;
+      document.getElementById('sc-accuracy').textContent = `${p.accuracy}%`;
+
+      const geo = p.geoStats || { correct: 0, wrong: 0, score: 0 };
+      const hist = p.histStats || { correct: 0, wrong: 0, score: 0 };
+
+      document.getElementById('sc-section-tbody').innerHTML = `
+        <tr>
+          <td class="py-3 px-4 font-bold text-white">Section I: Indian Geography (50 Qs)</td>
+          <td class="py-3 px-4 text-center text-slate-300">${geo.correct + geo.wrong}</td>
+          <td class="py-3 px-4 text-center font-bold text-emerald-400">${geo.correct}</td>
+          <td class="py-3 px-4 text-center font-bold text-rose-400">${geo.wrong}</td>
+          <td class="py-3 px-4 text-right font-extrabold text-sky-300">${Number(geo.score).toFixed(2)}</td>
+        </tr>
+        <tr>
+          <td class="py-3 px-4 font-bold text-white">Section II: Modern History (50 Qs)</td>
+          <td class="py-3 px-4 text-center text-slate-300">${hist.correct + hist.wrong}</td>
+          <td class="py-3 px-4 text-center font-bold text-emerald-400">${hist.correct}</td>
+          <td class="py-3 px-4 text-center font-bold text-rose-400">${hist.wrong}</td>
+          <td class="py-3 px-4 text-right font-extrabold text-sky-300">${Number(hist.score).toFixed(2)}</td>
+        </tr>
+      `;
+
+      switchView('scorecard');
+      filterScorecardSolutions('ALL');
+    }
+
+    window.filterScorecardSolutions = function (filterType) {
+      pollState.solutionFilter = filterType;
+      document.querySelectorAll('.sc-filter-btn').forEach((btn) => {
+        const active = btn.dataset.filter === filterType;
+        btn.className = active
+          ? 'sc-filter-btn px-3 py-1 rounded-lg text-xs font-bold bg-[#5288c1] text-white'
+          : 'sc-filter-btn px-3 py-1 rounded-lg text-xs font-bold bg-[#0e1621] text-slate-300';
+      });
+
+      const p = pollState.selectedScorecard;
+      if (!p) return;
+      const ansMap = p.answers || {};
+      const listEl = document.getElementById('sc-solutions-list');
+      listEl.innerHTML = '';
+      const letters = ['A', 'B', 'C', 'D'];
+
+      UPPSC_QUESTIONS.forEach((q, idx) => {
+        const rawAns = ansMap[idx];
+        const hasAns = rawAns !== undefined && rawAns !== null;
+        const userAns = hasAns ? Number(rawAns) : -1;
+        const isCorrect = hasAns && userAns === q.correct;
+        const isWrong = hasAns && userAns !== q.correct;
+
+        if (filterType === 'CORRECT' && !isCorrect) return;
+        if (filterType === 'WRONG' && !isWrong) return;
+
+        const counts = pollState.voteMatrix[idx] || [0, 0, 0, 0];
+        const totalVotes = counts.reduce((s, c) => s + c, 0);
+
+        const badge = isCorrect
+          ? `<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[11px] font-bold">✓ Correct (+1.33)</span>`
+          : isWrong
+          ? `<span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 text-[11px] font-bold">✕ Wrong (-0.33)</span>`
+          : `<span class="px-2 py-0.5 rounded bg-slate-700 text-slate-300 text-[11px] font-bold">Not Answered</span>`;
+
+        const card = document.createElement('div');
+        card.className = 'p-4 rounded-xl bg-[#0e1621] border border-[#232e3c] space-y-2.5';
+        card.innerHTML = `
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs font-extrabold text-[#6ab2f2]">Q.${q.id} • ${escapeHtml(q.topic)}</span>
+            ${badge}
+          </div>
+          <p class="text-xs sm:text-sm font-semibold text-white whitespace-pre-line">${escapeHtml(q.question)}</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            ${q.options
+              .map((opt, oIdx) => {
+                const vCount = counts[oIdx] || 0;
+                const vPct = totalVotes > 0 ? Math.round((vCount / totalVotes) * 100) : 0;
+                let cls = 'bg-[#17212b] border-[#232e3c] text-slate-300';
+                if (oIdx === q.correct) cls = 'bg-emerald-950/50 border-emerald-500/70 text-emerald-200 font-bold';
+                else if (oIdx === userAns && isWrong) cls = 'bg-rose-950/50 border-rose-500/70 text-rose-200 font-bold';
+                return `<div class="p-2.5 rounded-lg border ${cls} flex justify-between gap-2">
+                  <span><strong>(${letters[oIdx]})</strong> ${escapeHtml(opt)}</span>
+                  <span class="text-[11px] text-[#7f91a4] shrink-0">${vCount} (${vPct}%)</span>
+                </div>`;
+              })
+              .join('')}
+          </div>
+        `;
+        listEl.appendChild(card);
+      });
+    };
+
+    window.copyRoomInviteLink = function () {
+      const shareUrl = new URL(window.location.href);
+      shareUrl.searchParams.set('room', pollState.roomCode);
+      const inviteText = `Join my Live UPPSC Quiz Poll (Room: ${pollState.roomCode}) — 100 Geography & Modern History Questions! Open link: ${shareUrl.toString()}`;
+
+      const temp = document.createElement('textarea');
+      temp.value = inviteText;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand('copy');
+      document.body.removeChild(temp);
+      showToast(`Invite link for Room ${pollState.roomCode} copied! Paste on WhatsApp/Telegram.`, 'success');
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initFirebase();
+    });
+  </script>
+</body>
+</html>
